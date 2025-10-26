@@ -1,18 +1,17 @@
 /*
 =============================================================================
-Arquivo: vPalV9_final.c
-Projeto 1  Multiplicao de Matrizes (DGEMM) Sequencial e Paralela com OpenMP
+Arquivo: vPar.c
+Projeto 1 — Multiplicação de Matrizes (DGEMM) Sequencial e Paralela com OpenMP
 =============================================================================
-Disciplina: DEC107  Processamento Paralelo
-Curso: Bacharelado em Cincia da Computao
-Autores: Joo Manoel Fidelis Santos e Maria Eduarda Guedes Alves
+Disciplina: DEC107 — Processamento Paralelo
+Curso: Bacharelado em Ciência da Computação
+Autores: João Manoel Fidelis Santos e Maria Eduarda Guedes Alves
 Data: 27/09/2025
 
 Objetivo do projeto:
- - Implementar e comparar verses sequencial e paralela de DGEMM.
- - Medir tempo, GFLOPS, speedup e eficincia real.
- - Comparar com referncia de alta performance (BLAS).
-
+ - Implementar e comparar versões sequencial e paralela de DGEMM.
+ - Medir tempo, GFLOPS, speedup e eficiência real.
+ - Comparar com referência de alta performance (BLAS).
 =============================================================================
 */
 
@@ -22,7 +21,7 @@ Objetivo do projeto:
 #include <cblas.h>
 #include <time.h>
 
-// --- Prottipos das funes ---
+// --- Protótipos das funções ---
 void imprimir_informacoes_iniciais(void);
 void imprimir_hardware(void);
 double* matriz_alocar(int n);
@@ -30,7 +29,7 @@ void inicializa_matrizes(double *A, double *B, double *C, int n);
 void dgemm_sequencial_otimizado(double *A, double *B, double *C, int n);
 void dgemm_paralelo_otimizado(double *A, double *B, double *C, int n);
 
-// --- Funo principal ---
+// --- Função principal ---
 int main(void) {
   imprimir_informacoes_iniciais();
 
@@ -38,11 +37,11 @@ int main(void) {
   int num_tam = sizeof(tam_matrizes) / sizeof(int);
   int contagens_threads[] = {2, 4, 8};
   int num_thread_counts = sizeof(contagens_threads) / sizeof(int);
-  const int NUM_REPETICOES = 3; // Mdia de 3 execues
+  const int NUM_REPETICOES = 3; // Média de 3 execuções
 
-  printf("\n--- INCIO DOS EXPERIMENTOS (Mdia de %d execues) ---\n", NUM_REPETICOES);
+  printf("\n--- INÍCIO DOS EXPERIMENTOS (Média de %d execuções) ---\n", NUM_REPETICOES);
   printf("| %-8s | %-8s | %-12s | %-10s | %-10s | %-10s |\n",
-     "Tamanho", "Threads", "Tempo (s)", "GFLOPS", "Speedup", "Eficincia");
+     "Tamanho", "Threads", "Tempo (s)", "GFLOPS", "Speedup", "Eficiência");
   printf("|----------|----------|--------------|------------|------------|------------|\n");
 
   srand((unsigned int)time(NULL));
@@ -59,7 +58,7 @@ int main(void) {
 
     printf("\n[LOG] Executando testes para matriz de tamanho %dx%d...\n", tam_matriz, tam_matriz);
 
-    // --- 1. Teste Sequencial (Mdia de 3) ---
+    // --- 1. Teste Sequencial (Média de 3) ---
     double tempo_seq_total = 0.0;
     for (int rep = 0; rep < NUM_REPETICOES; rep++) {
       inicializa_matrizes(A, B, C, tam_matriz);
@@ -73,7 +72,7 @@ int main(void) {
     printf("| %-8d | %-8s | %-12.6f | %-10.3f | %-10s | %-10s |\n",
        tam_matriz, "1 (Seq)", tempo_seq_medio, gflops_seq, "1.00x", "100.00%");
 
-    // --- 2. Testes Paralelos (Mdia de 3) ---
+    // --- 2. Testes Paralelos (Média de 3) ---
     for (int t = 0; t < num_thread_counts; t++) {
       int n_threads = contagens_threads[t];
       omp_set_num_threads(n_threads);
@@ -89,13 +88,13 @@ int main(void) {
       double tempo_par_medio = tempo_par_total / NUM_REPETICOES;
 
       double speedup = tempo_seq_medio / tempo_par_medio;
-      double eficiencia = (speedup / (double)n_threads) * 100.0; // Eficincia real, pode ser >100%
+      double eficiencia = (speedup / (double)n_threads) * 100.0; // Eficiência real, pode ser >100%
       double gflops_par = (flops / tempo_par_medio) / 1e9;
       printf("| %-8d | %-8d | %-12.6f | %-10.3f | %-10.3fx | %-9.2f%% |\n",
          tam_matriz, n_threads, tempo_par_medio, gflops_par, speedup, eficiencia);
     }
 
-    // --- 3. Teste BLAS (Mdia de 3) ---
+    // --- 3. Teste BLAS (Média de 3) ---
     double tempo_blas_total = 0.0;
     for (int rep = 0; rep < NUM_REPETICOES; rep++) {
       inicializa_matrizes(A, B, C, tam_matriz);
@@ -120,7 +119,7 @@ int main(void) {
   return 0;
 }
 
-// --- Funes de multiplicao (sem medir tempo) ---
+// --- Funções de multiplicação (sem medir tempo) ---
 void dgemm_sequencial_otimizado(double *A, double *B, double *C, int n) {
   long n_long = n;
   for (long i = 0; i < n_long; i++) {
@@ -146,10 +145,10 @@ void dgemm_paralelo_otimizado(double *A, double *B, double *C, int n) {
   }
 }
 
-// --- Funes auxiliares ---
+// --- Funções auxiliares ---
 double* matriz_alocar(int n) {
   double *M = (double*) malloc((size_t)n * (size_t)n * sizeof(double));
-  if (!M) { printf("\nERRO: Falha na alocacao de memoria.\n"); exit(-1); }
+  if (!M) { printf("\nERRO: Falha na alocação de memória.\n"); exit(-1); }
   return M;
 }
 
@@ -166,25 +165,25 @@ void inicializa_matrizes(double *A, double *B, double *C, int n) {
 
 void imprimir_informacoes_iniciais(void) {
   printf("=============================================================\n");
-  printf("   Projeto 1  DGEMM Sequencial e Paralela com OpenMP\n");
+  printf("   Projeto 1 — DGEMM Sequencial e Paralela com OpenMP\n");
   printf("=============================================================\n");
-  printf("Autores: Joo Manoel Fidelis Santos e Maria Eduarda Guedes Alves\n");
-  printf("Disciplina: DEC107  Processamento Paralelo\n\n");
+  printf("Autores: João Manoel Fidelis Santos e Maria Eduarda Guedes Alves\n");
+  printf("Disciplina: DEC107 — Processamento Paralelo\n\n");
   printf("Hardware dos computadores utilizados:\n");
   imprimir_hardware();
 }
 
 void imprimir_hardware(void) {
   printf("\n--- Hardware de Maria Eduarda ---\n");
-  printf(" - CPU: Intel Core i7-10750H (6 ncleos, 12 threads) @ 2.6GHz\n");
+  printf(" - CPU: Intel Core i7-10750H (6 núcleos, 12 threads) @ 2.6GHz\n");
   printf(" - RAM: 16 GB DDR4\n");
   printf(" - GPU: NVIDIA GTX 1660 Ti\n");
   printf(" - SSD: 512 GB NVMe\n");
-  printf(" - OS: Windows 10 Home\n");
+  printf(" - SO: Windows 10 Home\n");
   printf("----------------------------------\n");
-  printf("\n--- Hardware de Joao Manoel ---\n");
-  printf(" - CPU: AMD Ryzen 5 5600G (6 ncleos, 12 threads)\n");
-  printf(" - Placa-me: SOYO SY-Classic B450M\n");
+  printf("\n--- Hardware de João Manoel ---\n");
+  printf(" - CPU: AMD Ryzen 5 5600G (6 núcleos, 12 threads)\n");
+  printf(" - Placa-mãe: SOYO SY-Classic B450M\n");
   printf(" - RAM: 40 GB DDR4 (Dual Channel)\n");
   printf(" - GPU: AMD Radeon Graphics (Integrada, Vega)\n");
   printf("----------------------------------\n");
