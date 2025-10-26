@@ -1,0 +1,94 @@
+#include "funcoes.h"
+
+// --- Funções de multiplicação ---
+void dgemm_sequencial(double *A, double *B, double *C, int n) {
+  long n_long = n;
+  for (long i = 0; i < n_long; i++) {
+    for (long k = 0; k < n_long; k++) {
+      double a_ik = A[n_long * i + k];
+      for (long j = 0; j < n_long; j++) {
+        C[n_long * i + j] += a_ik * B[n_long * k + j];
+      }
+    }
+  }
+}
+
+void dgemm_paralelo(double *A, double *B, double *C, int n) {
+  long n_long = n;
+  #pragma omp parallel for
+  for (long i = 0; i < n_long; i++) {
+    for (long k = 0; k < n_long; k++) {
+      double a_ik = A[n_long * i + k];
+      for (long j = 0; j < n_long; j++) {
+        C[n_long * i + j] += a_ik * B[n_long * k + j];
+      }
+    }
+  }
+}
+
+// --- Funções auxiliares ---
+double* aloca_matriz(int n) {
+  double *M = (double*) malloc((size_t)n * (size_t)n * sizeof(double));
+  if (!M) { printf("\nERRO: Falha na alocação de memória.\n"); exit(-1); }
+  return M;
+}
+
+void inicializa_matrizes(double *A, double *B, double *C, int n) {
+  long total = (long)n * n;
+
+  #pragma omp parallel for
+  for (long i = 0; i < total; i++) {
+    unsigned int seed = omp_get_thread_num() + (unsigned int)time(NULL);
+    A[i] = (double)(rand_r(&seed) % 3 - 1);
+    B[i] = (double)(rand_r(&seed) % 9 - 4);
+    C[i] = 0.0;
+  }
+}
+
+void dgemm_blas_wrapper(double* A, double* B, double* C, int tam) {
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+              tam, tam, tam, 
+              1.0, A, tam, B, tam, 0.0, C, tam);
+}
+
+void teste(FILE *file, func_matriz funcao, int NUM_REPETICOES, double *A, double *B, double *C, 
+           int tam_matriz, char *num_threads, char *speedup, char *eficiencia) {
+
+  long n_long = tam_matriz;
+  double flops = 2.0 * n_long * n_long * n_long;
+  double tempo_total = 0.0;
+
+  for (int rep = 0; rep < NUM_REPETICOES; rep++) {
+    inicializa_matrizes(A, B, C, tam_matriz);
+
+    double t0 = omp_get_wtime();
+    funcao(A, B, C, tam_matriz);  // chama a função passada
+    double t1 = omp_get_wtime();
+
+    tempo_total += (t1 - t0);
+  }
+
+  double tempo_medio = tempo_total / NUM_REPETICOES;
+  double gflops = (flops / tempo_medio) / 1e9;
+
+  fprintf(file, "| %-8d | %-8s | %-12.6f | %-10.3f | %-10s | %-10s |\n",
+          tam_matriz, num_threads, tempo_medio, gflops, speedup, eficiencia);
+}
+
+void imprimir_informacoes_iniciais(FILE *file, char nome_projeto[50]) {
+  fprintf(file, "================================================================\n");
+  fprintf(file, "%s\n", nome_projeto);
+  fprintf(file, "================================================================\n");
+  fprintf(file, "Autores: João Manoel Fidelis Santos e Maria Eduarda Guedes Alves\n");
+  fprintf(file, "Disciplina: DEC107 — Processamento Paralelo\n\n");
+  fprintf(file, "Hardware do computador utilizado:\n");
+  imprimir_hardware(file);
+}
+
+void imprimir_hardware(FILE *file) {
+  fprintf(file, " - CPU: AMD Ryzen 5 5600G (6 núcleos, 12 threads)\n");
+  fprintf(file, " - Placa-mãe: SOYO SY-Classic B450M\n");
+  fprintf(file, " - RAM: 40 GB DDR4 (Dual Channel)\n");
+  fprintf(file, " - GPU: AMD Radeon Graphics (Integrada, Vega)\n");
+  fprintf(file, "----------------------------------------------------------------\n");
+}
