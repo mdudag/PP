@@ -77,30 +77,12 @@ Trabalho realizado como creditação da disciplina de Processamento Paralelo, ap
   sudo apt install openmpi-bin libopenmpi-dev
   ~~~
 
-### Versão sequencial
-
-* Compilar:
+### Compilar e Executar
 
   ~~~bash
-  mpicc -o vSeq vSeq.c
+  mpicc -o main main.c funcoes.c
   ~~~
 
-* Executar:
-
   ~~~bash
-  mpirun -np 8 ./vSeq
-  ~~~
-
-### Versão Paralela com MPI
-
-* Compilar:
-
-  ~~~bash
-  mpicc -o vPar vPar.c
-  ~~~
-
-* Executar:
-
-  ~~~bash
-  mpirun -np 8 ./vPar
+  mpirun -np 8 ./main
   ~~~
