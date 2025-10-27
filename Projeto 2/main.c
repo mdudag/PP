@@ -20,18 +20,16 @@ int main(void) {
          "Tamanho", "Threads", "Tempo (s)", "GFLOPS", "Speedup", "Eficiência");
   fprintf(file, "|----------|----------|--------------|------------|------------|------------|\n");
 
-  srand((unsigned int)time(NULL));
+  // srand((unsigned int)time(NULL));
 
   for (int idx = 0; idx < num_tam; idx++) {
     int tam_matriz = tam_matrizes[idx];
-    long n_long = tam_matriz;
 
     double *A = aloca_matriz(tam_matriz);
     double *B = aloca_matriz(tam_matriz);
     double *C = aloca_matriz(tam_matriz);
 
-    double flops = 2.0 * n_long * n_long * n_long;
-    double tempo_seq_total = 0.0;
+    inicializa_matrizes(A, B, C, tam_matriz);
 
     fprintf(file, "\n[LOG] Executando testes para matriz de tamanho %dx%d...\n", tam_matriz, tam_matriz);
     

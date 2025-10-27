@@ -3,9 +3,11 @@
 // --- Funções de multiplicação ---
 void dgemm_sequencial(double *A, double *B, double *C, int n) {
   long n_long = n;
+
   for (long i = 0; i < n_long; i++) {
     for (long k = 0; k < n_long; k++) {
       double a_ik = A[n_long * i + k];
+
       for (long j = 0; j < n_long; j++) {
         C[n_long * i + j] += a_ik * B[n_long * k + j];
       }
@@ -15,10 +17,12 @@ void dgemm_sequencial(double *A, double *B, double *C, int n) {
 
 void dgemm_paralelo(double *A, double *B, double *C, int n) {
   long n_long = n;
+
   #pragma omp parallel for
   for (long i = 0; i < n_long; i++) {
     for (long k = 0; k < n_long; k++) {
       double a_ik = A[n_long * i + k];
+
       for (long j = 0; j < n_long; j++) {
         C[n_long * i + j] += a_ik * B[n_long * k + j];
       }
@@ -36,12 +40,17 @@ double* aloca_matriz(int n) {
 void inicializa_matrizes(double *A, double *B, double *C, int n) {
   long total = (long)n * n;
 
-  #pragma omp parallel for
-  for (long i = 0; i < total; i++) {
+  #pragma omp parallel 
+  {
+    // Cria uma semente aleatória para cada thread
     unsigned int seed = omp_get_thread_num() + (unsigned int)time(NULL);
-    A[i] = (double)(rand_r(&seed) % 3 - 1);
-    B[i] = (double)(rand_r(&seed) % 9 - 4);
-    C[i] = 0.0;
+  
+    #pragma omp for
+    for (long i = 0; i < total; i++) {
+      A[i] = (double)(rand_r(&seed) % 3 - 1);
+      B[i] = (double)(rand_r(&seed) % 9 - 4);
+      C[i] = 0.0;
+    }
   }
 }
 
@@ -62,7 +71,7 @@ void teste(FILE *file, func_matriz funcao, int NUM_REPETICOES, double *A, double
     inicializa_matrizes(A, B, C, tam_matriz);
 
     double t0 = omp_get_wtime();
-    funcao(A, B, C, tam_matriz);  // chama a função passada
+    funcao(A, B, C, tam_matriz);  // Chama a função passada
     double t1 = omp_get_wtime();
 
     tempo_total += (t1 - t0);
@@ -86,9 +95,11 @@ void imprimir_informacoes_iniciais(FILE *file, char nome_projeto[50]) {
 }
 
 void imprimir_hardware(FILE *file) {
-  fprintf(file, " - CPU: AMD Ryzen 5 5600G (6 núcleos, 12 threads)\n");
   fprintf(file, " - Placa-mãe: SOYO SY-Classic B450M\n");
-  fprintf(file, " - RAM: 40 GB DDR4 (Dual Channel)\n");
-  fprintf(file, " - GPU: AMD Radeon Graphics (Integrada, Vega)\n");
+  fprintf(file, " - CPU: AMD Ryzen 5 5600G (6 núcleos, 12 threads) @ 4.5 GHz\n");
+  fprintf(file, " - Cache L2: 3 MB, Cache L3: 16 MB\n");
+  fprintf(file, " - RAM: 40 GB DDR4 (Dual Channel) @ 2393 MHz\n");
+  fprintf(file, " - Sistema Operacional: Ubuntu 24.04 LTS\n");
+  fprintf(file, " - Compilador: GCC 13.3.0\n");
   fprintf(file, "----------------------------------------------------------------\n");
 }
