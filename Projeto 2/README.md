@@ -25,3 +25,45 @@ Referente as funções dgemm e auxiliares:
   * A versão paralela com OpenMP (comparação de speedup e eficiência em diferentes arquiteturas e modelos de paralelismo). 
 
 * Incluir testes de corretude e análise de precisão numérica, ausentes no Projeto 1. 
+
+## Instalação
+
+* Biblioteca de MPI chamada Open MPI:
+  
+  ~~~bash
+  sudo apt update
+  ~~~
+
+  ~~~bash
+  sudo apt upgrade -y
+  ~~~
+
+  ~~~bash
+  sudo apt install -y build-essential
+  ~~~
+
+  ~~~bash
+  sudo apt install openmpi-bin libopenmpi-dev
+  ~~~
+
+## Compilar e Executar
+
+* Sem MPI
+
+  ~~~bash
+  gcc -O3 -fopenmp -o main main.c funcoes.c -lblas -lopenblas -mavx -mavx2 -mfma
+  ~~~
+
+  ~~~bash
+  ./main
+  ~~~
+
+* Com MPI
+
+  ~~~bash
+  mpicc -o main main.c funcoes.c
+  ~~~
+
+  ~~~bash
+  mpirun -np 8 ./main
+  ~~~

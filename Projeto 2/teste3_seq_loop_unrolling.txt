@@ -1,0 +1,36 @@
+================================================================
+   Projeto 2 — Multiplicação de Matrizes (DGEMM) com MPI
+================================================================
+Autores: João Manoel Fidelis Santos e Maria Eduarda Guedes Alves
+Disciplina: DEC107 — Processamento Paralelo
+
+Hardware do computador utilizado:
+ - Placa-mãe: SOYO SY-Classic B450M
+ - CPU: AMD Ryzen 5 5600G (6 núcleos, 12 threads) @ 4.5 GHz
+ - Cache L2: 3 MB, Cache L3: 16 MB
+ - RAM: 40 GB DDR4 (Dual Channel) @ 2393 MHz
+ - Sistema Operacional: Ubuntu 24.04 LTS
+ - Compilador: GCC 13.3.0
+----------------------------------------------------------------
+
+--- INÍCIO DOS EXPERIMENTOS (Média de 3 execuções) ---
+| Tamanho  | Threads  | Tempo (s)    | GFLOPS     | Speedup    | Eficiência |
+|----------|----------|--------------|------------|------------|------------|
+
+[LOG] Executando testes para matriz de tamanho 512x512...
+| 512      | 1 (Seq)  | 0.038566     | 6.960      | 1.00x      | 100.00%    |
+|----------|----------|--------------|------------|------------|------------|
+
+[LOG] Executando testes para matriz de tamanho 1024x1024...
+| 1024     | 1 (Seq)  | 0.255037     | 8.420      | 1.00x      | 100.00%    |
+|----------|----------|--------------|------------|------------|------------|
+
+[LOG] Executando testes para matriz de tamanho 2048x2048...
+| 2048     | 1 (Seq)  | 1.994557     | 8.613      | 1.00x      | 100.00%    |
+|----------|----------|--------------|------------|------------|------------|
+
+[LOG] Executando testes para matriz de tamanho 4096x4096...
+| 4096     | 1 (Seq)  | 17.006405    | 8.082      | 1.00x      | 100.00%    |
+|----------|----------|--------------|------------|------------|------------|
+
+[LOG] Experimentos finalizados.

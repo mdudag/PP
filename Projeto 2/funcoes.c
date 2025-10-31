@@ -16,11 +16,18 @@ void dgemm_sequencial(double *A, double *B, double *C, int n) {
         for (i = ii; i < ii + block; i++) {
           for (k = kk; k < kk + block; k++) {
             double a_ik = A[n_long * i + k];
+            // Utilizando registradores vetoriais AVX
             for (j = jj; j < jj + block; j+=4) {
-              C[n_long * i + j + 0] += a_ik * B[n_long * k + j + 0];
-              C[n_long * i + j + 1] += a_ik * B[n_long * k + j + 1];
-              C[n_long * i + j + 2] += a_ik * B[n_long * k + j + 2];
-              C[n_long * i + j + 3] += a_ik * B[n_long * k + j + 3];
+              // Coloca o mesmo valor de A em todos os slots do registrador
+              __m256d mA = _mm256_set1_pd(a_ik);
+              // Carrega 4 doubles de B e C na memoria
+              __m256d mB = _mm256_loadu_pd(&B[n_long * k + j]);
+              __m256d mC = _mm256_loadu_pd(&C[n_long * i + j]);
+
+              // Faz o calculo de multiplicacao e soma
+              mC = _mm256_fmadd_pd(mA, mB, mC);
+              // Armazena o resultado em C
+              _mm256_storeu_pd(&C[n_long * i + j], mC);
             }
           }
         }

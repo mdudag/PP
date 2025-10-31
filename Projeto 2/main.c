@@ -1,7 +1,7 @@
 #include "funcoes.h"
 
 int main(void) {
-  FILE *file = fopen("teste-seq3-loop-unrolling.txt", "w");
+  FILE *file = fopen("teste5_seq_blas.txt", "w");
   if (!file) {
     printf("Erro ao abrir o arquivo.\n");
     return 1;
@@ -49,7 +49,7 @@ int main(void) {
     // }
     
     // --- 4. Teste BLAS ---
-    // teste(file, dgemm_blas_wrapper, NUM_REPETICOES, A, B, C, tam_matriz, "BLAS", "-", "-");
+    teste(file, dgemm_blas_wrapper, NUM_REPETICOES, A, B, C, tam_matriz, "BLAS", "-", "-");
 
     fprintf(file, "|----------|----------|--------------|------------|------------|------------|\n");
     free(A); free(B); free(C);
