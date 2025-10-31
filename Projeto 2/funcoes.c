@@ -16,9 +16,11 @@ void dgemm_sequencial(double *A, double *B, double *C, int n) {
         for (i = ii; i < ii + block; i++) {
           for (k = kk; k < kk + block; k++) {
             double a_ik = A[n_long * i + k];
-
-            for (j = jj; j < jj + block; j++) {
-              C[n_long * i + j] += a_ik * B[n_long * k + j];
+            for (j = jj; j < jj + block; j+=4) {
+              C[n_long * i + j + 0] += a_ik * B[n_long * k + j + 0];
+              C[n_long * i + j + 1] += a_ik * B[n_long * k + j + 1];
+              C[n_long * i + j + 2] += a_ik * B[n_long * k + j + 2];
+              C[n_long * i + j + 3] += a_ik * B[n_long * k + j + 3];
             }
           }
         }
