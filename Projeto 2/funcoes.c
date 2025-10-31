@@ -2,8 +2,6 @@
 
 void dgemm_sequencial(double *A, double *B, double *C, int n) {
   long n_long = n;
-  // máximo recomendado para L2 = ≈360, porém 320 é uma boa escolha para facilitar AVX (múltiplo de 8 ou 16, vetores de 256 bits = 4 doubles por registrador)
-  // Memoria necessaria=3×(B^2)×8bytes (double)=24B2
   long block = 256;  // Valor adequado para o cache
   long ii, jj, kk;
   long i, j, k;
@@ -38,13 +36,13 @@ void dgemm_sequencial(double *A, double *B, double *C, int n) {
 }
 
 void imprimir_matriz(double *M, int n, FILE *file) {
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            fprintf(file, "%8.2f ", M[i*n + j]);  // %8.2f para alinhar e mostrar 2 casas decimais
-        }
-        fprintf(file, "\n");
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      fprintf(file, "%8.2f ", M[i*n + j]);
     }
     fprintf(file, "\n");
+  }
+  fprintf(file, "\n");
 }
 
 void dgemm_paralelo(double *A, double *B, double *C, int n) {
@@ -74,7 +72,7 @@ void inicializa_matrizes(double *A, double *B, double *C, int n) {
 
   #pragma omp parallel 
   {
-    // Cria uma semente aleatória para cada thread
+    // Cria uma semente aleatoria para cada thread
     unsigned int seed = omp_get_thread_num() + (unsigned int)time(NULL);
   
     #pragma omp for
@@ -103,7 +101,7 @@ void teste(FILE *file, func_matriz funcao, int NUM_REPETICOES, double *A, double
     inicializa_matrizes(A, B, C, tam_matriz);
 
     double t0 = omp_get_wtime();
-    funcao(A, B, C, tam_matriz);  // Chama a função passada
+    funcao(A, B, C, tam_matriz);  // Chama a funcao passada
     double t1 = omp_get_wtime();
 
     tempo_total += (t1 - t0);

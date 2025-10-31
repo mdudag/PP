@@ -1,7 +1,7 @@
 #include "funcoes.h"
 
 int main(void) {
-  FILE *file = fopen("teste5_seq_blas.txt", "w");
+  FILE *file = fopen("teste6.txt", "w");
   if (!file) {
     printf("Erro ao abrir o arquivo.\n");
     return 1;
@@ -13,7 +13,7 @@ int main(void) {
   int num_tam = sizeof(tam_matrizes) / sizeof(int);
 //   int contagens_threads[] = {2, 4, 8};
 //   int num_thread_counts = sizeof(contagens_threads) / sizeof(int);
-  const int NUM_REPETICOES = 3; // Média de 3 execuções
+  const int NUM_REPETICOES = 3; // Media de 3 execucoes
 
   fprintf(file, "\n--- INÍCIO DOS EXPERIMENTOS (Média de %d execuções) ---\n", NUM_REPETICOES);
   fprintf(file, "| %-8s | %-8s | %-12s | %-10s | %-10s | %-10s |\n",
