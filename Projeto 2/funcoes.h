@@ -13,6 +13,7 @@ void imprimir_informacoes_iniciais(FILE *file, char nome_projeto[50]);
 void imprimir_hardware(FILE *file);
 double* aloca_matriz(int n);
 void inicializa_matrizes(double *A, double *B, double *C, int n);
+void imprimir_matriz(double *M, int n, FILE *file);
 void dgemm_sequencial(double *A, double *B, double *C, int n);
 void dgemm_paralelo(double *A, double *B, double *C, int n);
 void dgemm_blas_wrapper(double* A, double* B, double* C, int tam);

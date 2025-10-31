@@ -1,7 +1,7 @@
 #include "funcoes.h"
 
 int main(void) {
-  FILE *file = fopen("testes.txt", "w");
+  FILE *file = fopen("teste-seq1-cache-blocking.txt", "w");
   if (!file) {
     printf("Erro ao abrir o arquivo.\n");
     return 1;
@@ -19,8 +19,6 @@ int main(void) {
   fprintf(file, "| %-8s | %-8s | %-12s | %-10s | %-10s | %-10s |\n",
          "Tamanho", "Threads", "Tempo (s)", "GFLOPS", "Speedup", "Eficiência");
   fprintf(file, "|----------|----------|--------------|------------|------------|------------|\n");
-
-  // srand((unsigned int)time(NULL));
 
   for (int idx = 0; idx < num_tam; idx++) {
     int tam_matriz = tam_matrizes[idx];
@@ -51,7 +49,7 @@ int main(void) {
     // }
     
     // --- 4. Teste BLAS ---
-    teste(file, dgemm_blas_wrapper, NUM_REPETICOES, A, B, C, tam_matriz, "BLAS", "-", "-");
+    // teste(file, dgemm_blas_wrapper, NUM_REPETICOES, A, B, C, tam_matriz, "BLAS", "-", "-");
 
     fprintf(file, "|----------|----------|--------------|------------|------------|------------|\n");
     free(A); free(B); free(C);
