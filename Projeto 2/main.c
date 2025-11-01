@@ -1,7 +1,7 @@
 #include "funcoes.h"
 
 int main(void) {
-  FILE *file = fopen("teste7_par.txt", "w");
+  FILE *file = fopen("./testes/teste7_par.txt", "w");
   if (!file) {
     printf("Erro ao abrir o arquivo.\n");
     return 1;
