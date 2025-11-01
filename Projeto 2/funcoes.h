@@ -7,6 +7,7 @@
 #include <cblas.h>
 #include <time.h>
 #include <immintrin.h>
+#include <string.h>
 
 typedef void (*func_matriz)(double* A, double* B, double* C, int tam);
 
@@ -16,9 +17,10 @@ void imprimir_matriz(double *M, int n, FILE *file);
 double* aloca_matriz(int n);
 void inicializa_matrizes(double *A, double *B, double *C, int n);
 void dgemm_sequencial(double *A, double *B, double *C, int n);
-void dgemm_paralelo(double *A, double *B, double *C, int n);
+void dgemm_paralelo_openMP(double *A, double *B, double *C, int n);
 void dgemm_blas_wrapper(double* A, double* B, double* C, int tam);
-void teste(FILE *file, func_matriz funcao, int NUM_REPETICOES, double *A, double *B, double *C, 
-           int tam_matriz, char *num_threads, char *speedup, char *eficiencia);
+double teste(FILE *file, func_matriz funcao, int NUM_REPETICOES, 
+             double *A, double *B, double *C, int tam_matriz, char *num_threads, 
+             char *speedup, char *eficiencia, double tempo_seq_medio);
 
 #endif
