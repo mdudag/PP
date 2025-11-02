@@ -1,0 +1,96 @@
+================================================================
+   Projeto 2 — Multiplicacao de Matrizes (DGEMM) com MPI
+================================================================
+Autores: Joao Manoel Fidelis Santos e Maria Eduarda Guedes Alves
+Disciplina: DEC107 — Processamento Paralelo
+
+Hardware do computador utilizado:
+ - Placa-mae: SOYO SY-Classic B450M
+ - CPU: AMD Ryzen 5 5600G (6 nucleos, 12 threads) @ 4.5 GHz
+ - Cache L2: 3 MB, Cache L3: 16 MB
+ - RAM: 40 GB DDR4 (Dual Channel) @ 2393 MHz
+ - Sistema Operacional: Ubuntu 24.04 LTS
+ - Compilador: GCC 13.3.0
+----------------------------------------------------------------
+
+--- INICIO DOS EXPERIMENTOS (Media de 3 execucoes) ---
+| Tamanho  | Threads  | Tempo (s)    | GFLOPS     | Speedup    | Eficiencia |
+|----------|----------|--------------|------------|------------|------------|
+
+[LOG] Executando testes para matriz de tamanho 512x512...
+| 512      | 1 (Seq)  | 0.023679     | 11.336     | 1.00x      | 100.00%    |
+| 512      | 2        | 0.019024     | 14.110     | 1.244705   | 62.235241  |
+[VALIDACAO] 2       : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 2       : SUCESSO
+| 512      | 4        | 0.019470     | 13.787     | 1.216231   | 30.405775  |
+[VALIDACAO] 4       : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 4       : SUCESSO
+| 512      | 6        | 0.016987     | 15.803     | 1.394004   | 23.233407  |
+[VALIDACAO] 6       : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 6       : SUCESSO
+| 512      | 6 (MPI)  | 0.010271     | 26.136     | 2.305486   | 38.424764  |
+[VALIDACAO] 6 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 6 (MPI) : SUCESSO
+| 512      | BLAS     | 0.010633     | 25.246     | -          | -          |
+[VALIDACAO] BLAS    : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] BLAS    : SUCESSO
+|----------|----------|--------------|------------|------------|------------|
+
+[LOG] Executando testes para matriz de tamanho 1024x1024...
+| 1024     | 1 (Seq)  | 0.221410     | 9.699      | 1.00x      | 100.00%    |
+| 1024     | 2        | 0.138399     | 15.517     | 1.599792   | 79.989619  |
+[VALIDACAO] 2       : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 2       : SUCESSO
+| 1024     | 4        | 0.084596     | 25.385     | 2.617256   | 65.431394  |
+[VALIDACAO] 4       : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 4       : SUCESSO
+| 1024     | 6        | 0.085608     | 25.085     | 2.586320   | 43.105339  |
+[VALIDACAO] 6       : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 6       : SUCESSO
+| 1024     | 6 (MPI)  | 0.071263     | 30.134     | 3.106934   | 51.782231  |
+[VALIDACAO] 6 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 6 (MPI) : SUCESSO
+| 1024     | BLAS     | 0.058268     | 36.855     | -          | -          |
+[VALIDACAO] BLAS    : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] BLAS    : SUCESSO
+|----------|----------|--------------|------------|------------|------------|
+
+[LOG] Executando testes para matriz de tamanho 2048x2048...
+| 2048     | 1 (Seq)  | 1.791565     | 9.589      | 1.00x      | 100.00%    |
+| 2048     | 2        | 1.208119     | 14.220     | 1.482937   | 74.146868  |
+[VALIDACAO] 2       : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 2       : SUCESSO
+| 2048     | 4        | 0.661778     | 25.960     | 2.707200   | 67.679993  |
+[VALIDACAO] 4       : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 4       : SUCESSO
+| 2048     | 6        | 0.649602     | 26.447     | 2.757944   | 45.965733  |
+[VALIDACAO] 6       : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 6       : SUCESSO
+| 2048     | 6 (MPI)  | 0.580411     | 29.600     | 3.086719   | 51.445325  |
+[VALIDACAO] 6 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 6 (MPI) : SUCESSO
+| 2048     | BLAS     | 0.140119     | 122.609    | -          | -          |
+[VALIDACAO] BLAS    : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] BLAS    : SUCESSO
+|----------|----------|--------------|------------|------------|------------|
+
+[LOG] Executando testes para matriz de tamanho 4096x4096...
+| 4096     | 1 (Seq)  | 15.498299    | 8.868      | 1.00x      | 100.00%    |
+| 4096     | 2        | 10.162799    | 13.524     | 1.525003   | 76.250155  |
+[VALIDACAO] 2       : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 2       : SUCESSO
+| 4096     | 4        | 5.792559     | 23.727     | 2.675553   | 66.888824  |
+[VALIDACAO] 4       : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 4       : SUCESSO
+| 4096     | 6        | 4.816785     | 28.533     | 3.217561   | 53.626016  |
+[VALIDACAO] 6       : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 6       : SUCESSO
+| 4096     | 6 (MPI)  | 4.805248     | 28.602     | 3.225286   | 53.754765  |
+[VALIDACAO] 6 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 6 (MPI) : SUCESSO
+| 4096     | BLAS     | 0.498394     | 275.764    | -          | -          |
+[VALIDACAO] BLAS    : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] BLAS    : SUCESSO
+|----------|----------|--------------|------------|------------|------------|
+
+[LOG] Experimentos finalizados.
