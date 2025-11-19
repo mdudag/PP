@@ -1,0 +1,77 @@
+================================================================
+   Projeto 2 — Multiplicacao de Matrizes (DGEMM) com MPI
+================================================================
+Autores: Joao Manoel Fidelis Santos e Maria Eduarda Guedes Alves
+Disciplina: DEC107 — Processamento Paralelo
+
+Hardware do computador utilizado:
+ - Placa-mae: SOYO SY-Classic B450M
+ - CPU: AMD Ryzen 5 5600G (6 nucleos, 12 threads) @ 4.5 GHz
+ - Cache L2: 3 MB, Cache L3: 16 MB
+ - RAM: 40 GB DDR4 (Dual Channel) @ 2393 MHz
+ - Sistema Operacional: Ubuntu 24.04 LTS
+ - Compilador: GCC 13.3.0
+----------------------------------------------------------------
+
+--- INICIO DOS EXPERIMENTOS (Media de 3 execucoes) ---
+| Tamanho  | Threads  | Tempo (s)    | GFLOPS     | Speedup    | Eficiencia |
+|----------|----------|--------------|------------|------------|------------|
+
+[LOG] Executando testes para matriz de tamanho 512x512...
+| 512      | 1 (Seq)  | 0.066838     | 4.016      | 1.00x      | 100.00%    |
+| 512      | 2 (OpenMP) | 0.043865     | 6.120      | 1.523728   | 76.186420  |
+[VALIDACAO] 2 (OpenMP): Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 2 (OpenMP): SUCESSO
+| 512      | 4 (OpenMP) | 0.037931     | 7.077      | 1.762101   | 44.052529  |
+[VALIDACAO] 4 (OpenMP): Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 4 (OpenMP): SUCESSO
+| 512      | 2 (MPI)  | 0.037681     | 7.124      | 1.773804   | 88.690224  |
+[VALIDACAO] 2 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 2 (MPI) : SUCESSO
+| 512      | 4 (MPI)  | 0.027838     | 9.643      | 2.400968   | 60.024189  |
+[VALIDACAO] 4 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 4 (MPI) : SUCESSO
+| 512      | BLAS     | 0.012735     | 21.078     | -          | -          |
+[VALIDACAO] BLAS    : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] BLAS    : SUCESSO
+|----------|----------|--------------|------------|------------|------------|
+
+[LOG] Executando testes para matriz de tamanho 1024x1024...
+| 1024     | 1 (Seq)  | 0.439127     | 4.890      | 1.00x      | 100.00%    |
+| 1024     | 2 (OpenMP) | 0.267751     | 8.020      | 1.640058   | 82.002915  |
+[VALIDACAO] 2 (OpenMP): Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 2 (OpenMP): SUCESSO
+| 1024     | 4 (OpenMP) | 0.166301     | 12.913     | 2.640551   | 66.013766  |
+[VALIDACAO] 4 (OpenMP): Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 4 (OpenMP): SUCESSO
+| 1024     | 2 (MPI)  | 0.293704     | 7.312      | 1.495136   | 74.756801  |
+[VALIDACAO] 2 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 2 (MPI) : SUCESSO
+| 1024     | 4 (MPI)  | 0.157017     | 13.677     | 2.796684   | 69.917097  |
+[VALIDACAO] 4 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 4 (MPI) : SUCESSO
+| 1024     | BLAS     | 0.062688     | 34.257     | -          | -          |
+[VALIDACAO] BLAS    : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] BLAS    : SUCESSO
+|----------|----------|--------------|------------|------------|------------|
+
+[LOG] Executando testes para matriz de tamanho 2048x2048...
+| 2048     | 1 (Seq)  | 3.456627     | 4.970      | 1.00x      | 100.00%    |
+| 2048     | 2 (OpenMP) | 2.153377     | 7.978      | 1.605212   | 80.260596  |
+[VALIDACAO] 2 (OpenMP): Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 2 (OpenMP): SUCESSO
+| 2048     | 4 (OpenMP) | 1.447985     | 11.865     | 2.387199   | 59.679965  |
+[VALIDACAO] 4 (OpenMP): Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 4 (OpenMP): SUCESSO
+| 2048     | 2 (MPI)  | 2.229034     | 7.707      | 1.550729   | 77.536430  |
+[VALIDACAO] 2 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 2 (MPI) : SUCESSO
+| 2048     | 4 (MPI)  | 1.349554     | 12.730     | 2.561310   | 64.032739  |
+[VALIDACAO] 4 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] 4 (MPI) : SUCESSO
+| 2048     | BLAS     | 0.602575     | 28.511     | -          | -          |
+[VALIDACAO] BLAS    : Diferenca Relativa Maxima = 0.000000e+00
+[VALIDACAO] BLAS    : SUCESSO
+|----------|----------|--------------|------------|------------|------------|
+
+[LOG] Experimentos finalizados.

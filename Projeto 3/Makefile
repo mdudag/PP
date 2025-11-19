@@ -8,7 +8,7 @@ SRCS = main.c funcoes.c
 TARGET = main
 
 # Variáveis padrão para rodar que podem ser alteradas na hora de chamar o make
-NP ?= 4
+NP ?= 6
 
 all: $(TARGET)
 
@@ -19,6 +19,7 @@ $(TARGET): $(SRCS) funcoes.h
 
 run: all
 	@echo "Executando bateria de testes (512 a 4096)..."
+	@mkdir -p testes
 	export OPENBLAS_NUM_THREADS=1 && mpirun -np $(NP) ./$(TARGET)
 
 clean:

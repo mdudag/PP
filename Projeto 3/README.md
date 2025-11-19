@@ -47,17 +47,17 @@ sudo apt install -y libopenblas-dev
 ~~~
 
 ### 3. Bibliotecas Python (para gráficos):
-    
-* Instala o Python e o gerenciador de pacotes
+
+* Atualização da lista de pacotes
 
   ~~~bash
-  sudo apt install -y python3 python3-pip
+  sudo apt update
   ~~~
 	
-* Instala os pacotes necessários usando o gerenciador do sistema (Recomendado para ambientes WSL/Ubuntu modernos)
+* Instala o Python e os pacotes necessários usando o gerenciador do sistema (Recomendado para ambientes WSL/Ubuntu modernos)
 
   ~~~bash
-  sudo apt install -y python3-pandas python3-matplotlib python3-numpy
+  sudo apt install -y python3-pip python3-pandas python3-matplotlib python3-numpy
   ~~~
     
 ## Compilar, Executar e Analisar
