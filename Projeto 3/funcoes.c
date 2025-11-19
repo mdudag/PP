@@ -1,6 +1,6 @@
 #include "funcoes.h"
 
-// Variaveis globais de controle
+// Variaveis globais de controle para mpi wrapper
 static MPI_Comm g_mpi_comm = MPI_COMM_NULL;
 static int g_mpi_rank = 0;
 static int g_mpi_size = 1;
@@ -164,73 +164,35 @@ void dgemm_blas_wrapper(double* A, double* B, double* C, int tam) {
               1.0, A, tam, B, tam, 0.0, C, tam);
 }
 
-// -- Funcoes de Teste e Validacao
+// -- Funcoes de Medicao e Validacao
 
-double teste(FILE *file, func_matriz funcao, int NUM_REPETICOES, double *A, double *B, double *C, 
-           int tam_matriz, char *num_threads, char *speedup, char *eficiencia, double tempo_seq_medio) {
-
-  long n_long = tam_matriz;
-  double flops = 2.0 * n_long * n_long * n_long;
+// funcao teste renomeada e gora retorna o TEMPO e não imprime nada
+double medir_tempo_execucao(func_matriz funcao, int NUM_REPETICOES, double *A, double *B, double *C, int tam_matriz) {
+  int is_mpi = (g_mpi_comm != MPI_COMM_NULL);
   double tempo_total = 0.0;
 
-  // Determina se estamos em modo MPI
-  int is_mpi = (g_mpi_comm != MPI_COMM_NULL);
-
   for (int rep = 0; rep < NUM_REPETICOES; rep++) {
+    if (!is_mpi || g_mpi_rank == 0) zera_matriz(C, tam_matriz);
     
-    // Apenas Rank 0 zera a matriz global (em MPI, os outros não têm a matriz C válida)
-    if (!is_mpi || g_mpi_rank == 0) {
-        zera_matriz(C, tam_matriz);
-    }
-
-    // Sincronização CRUCIAL para medir tempo correto em MPI
     if (is_mpi) MPI_Barrier(g_mpi_comm);
-    
-    double t0 = omp_get_wtime(); // Ou MPI_Wtime(), ambos funcionam bem aqui
+    double t0 = omp_get_wtime();
     
     funcao(A, B, C, tam_matriz);
     
     if (is_mpi) MPI_Barrier(g_mpi_comm);
-    
     double t1 = omp_get_wtime();
+    
     tempo_total += (t1 - t0);
   }
 
-  double tempo_medio = tempo_total / NUM_REPETICOES;
-  
-  // O resto da função é idêntico, MAS precisamos proteger o fprintf
-  // Apenas o Rank 0 deve escrever no arquivo e calcular métricas
-  
-  if (!is_mpi || g_mpi_rank == 0) {
-      if (tempo_seq_medio > 0.0) {
-        // Ajuste: Se for MPI, num_threads na verdade é num_processos
-        // Convertemos string para double para o calculo
-        double n_res = atof(num_threads); 
-        // Se a string contiver texto (ex: "4 (MPI)"), atof pega o número inicial "4"
-        
-        double speedup_d = tempo_seq_medio / tempo_medio;
-        double eficiencia_d = (speedup_d / n_res) * 100.0;
-        
-        snprintf(speedup, 20, "%.6f", speedup_d);
-        snprintf(eficiencia, 20, "%.6f", eficiencia_d);
-      }
-
-      double gflops = (flops / tempo_medio) / 1e9;
-
-      fprintf(file, "| %-8d | %-8s | %-12.6f | %-10.3f | %-10s | %-10s |\n",
-              tam_matriz, num_threads, tempo_medio, gflops, speedup, eficiencia);
-  }
-
-  return tempo_medio;
+  return tempo_total / NUM_REPETICOES;
 }
 
-void valida_resultado(FILE *file, double *C_correto, double *C_calculado, int n, char *versao) {
+// Agora retorna o ERRO (diff maxima) e não imprime nada
+double valida_resultado(double *C_correto, double *C_calculado, int n) {
     double max_rel_diff = 0.0;
-    long n_long = n;
-    long total_elementos = n_long * n_long;
-    
-    // Epsilon para evitar divisão por zero, conforme especificado no PDF [cite: 3791]
-    const double epsilon = 1e-12; // Pode ser DBL_EPSILON de <float.h>
+    long total_elementos = (long)n * n;
+    const double epsilon = 1e-12; 
 
     for (long i = 0; i < total_elementos; i++) {
         double C_seq = C_correto[i];
@@ -238,27 +200,42 @@ void valida_resultado(FILE *file, double *C_correto, double *C_calculado, int n,
         double diff_abs = fabs(C_seq - C_par);
         double rel_diff;
 
-        // Implementa a fórmula de diferença relativa do PDF [cite: 3791]
-        // Usamos o valor absoluto do sequencial + epsilon para segurança
-        if (fabs(C_seq) < epsilon) {
-            rel_diff = diff_abs; // Se C_seq é ~0, usamos a diferença absoluta
-        } else {
-            rel_diff = diff_abs / fabs(C_seq);
-        }
+        if (fabs(C_seq) < epsilon) rel_diff = diff_abs;
+        else rel_diff = diff_abs / fabs(C_seq);
 
-        if (rel_diff > max_rel_diff) {
-            max_rel_diff = rel_diff;
-        }
+        if (rel_diff > max_rel_diff) max_rel_diff = rel_diff;
     }
+    return max_rel_diff;
+}
+
+void registrar_resultado(FILE *file, int tam_matriz, char *versao, 
+                         double tempo, double tempo_seq_base, int n_threads, 
+                         double erro_max) {
     
-    // Imprime o resultado da validação no arquivo de log
-    fprintf(file, "[VALIDACAO] %-8s: Diferenca Relativa Maxima = %.6e\n", versao, max_rel_diff);
+    // Define Status Visual
+    char *status_val = (erro_max < 1e-9) ? "SUCESSO" : "FALHOU";
     
-    // Compara com o limite aceitável do PDF [cite: 3792]
-    if (max_rel_diff > 1e-9) {
-        fprintf(file, "[VALIDACAO] %-8s: FALHOU (Diferenca > 1e-9)\n", versao);
-    } else {
-        fprintf(file, "[VALIDACAO] %-8s: SUCESSO\n", versao);
+    // Calcula GFLOPS
+    double gflops = (2.0 * tam_matriz * tam_matriz * tam_matriz / tempo) / 1e9;
+
+    // Formata e imprime na tabela
+    // Caso 1: BLAS com n_threads=0
+    if (n_threads == 0) {
+        fprintf(file, "| %-8d | %-12s | %-12.6f | %-10.3f | %-10s | %-10s | %-12.2e | %-9s |\n",
+              tam_matriz, versao, tempo, gflops, "-", "-", erro_max, status_val);
+    } 
+    // Caso 2: Sequencial
+    else if (tempo_seq_base <= 0.0 || strcmp(versao, "1 (Seq)") == 0) {
+        fprintf(file, "| %-8d | %-12s | %-12.6f | %-10.3f | %-10s | %-10s | %-12.2e | %-9s |\n",
+              tam_matriz, versao, tempo, gflops, "1.00x", "100.00%", erro_max, status_val);
+    } 
+    // Caso 3: Paralelo (OpenMP ou MPI)
+    else {
+        double speedup = tempo_seq_base / tempo;
+        double eficiencia = (speedup / n_threads) * 100.0;
+
+        fprintf(file, "| %-8d | %-12s | %-12.6f | %-10.3f | %-10.2fx | %-9.2f%% | %-12.2e | %-9s |\n",
+              tam_matriz, versao, tempo, gflops, speedup, eficiencia, erro_max, status_val);
     }
 }
 

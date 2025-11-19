@@ -18,58 +18,58 @@ Hardware do computador utilizado:
 |----------|----------|--------------|------------|------------|------------|
 
 [LOG] Executando testes para matriz de tamanho 512x512...
-| 512      | 1 (Seq)  | 0.066838     | 4.016      | 1.00x      | 100.00%    |
-| 512      | 2 (OpenMP) | 0.043865     | 6.120      | 1.523728   | 76.186420  |
+| 512      | 1 (Seq)  | 0.063279     | 4.242      | 1.00x      | 100.00%    |
+| 512      | 2 (OpenMP) | 0.040466     | 6.634      | 1.563760   | 78.188022  |
 [VALIDACAO] 2 (OpenMP): Diferenca Relativa Maxima = 0.000000e+00
 [VALIDACAO] 2 (OpenMP): SUCESSO
-| 512      | 4 (OpenMP) | 0.037931     | 7.077      | 1.762101   | 44.052529  |
+| 512      | 4 (OpenMP) | 0.033756     | 7.952      | 1.874578   | 46.864460  |
 [VALIDACAO] 4 (OpenMP): Diferenca Relativa Maxima = 0.000000e+00
 [VALIDACAO] 4 (OpenMP): SUCESSO
-| 512      | 2 (MPI)  | 0.037681     | 7.124      | 1.773804   | 88.690224  |
+| 512      | 2 (MPI)  | 0.044541     | 6.027      | 1.420672   | 71.033597  |
 [VALIDACAO] 2 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
 [VALIDACAO] 2 (MPI) : SUCESSO
-| 512      | 4 (MPI)  | 0.027838     | 9.643      | 2.400968   | 60.024189  |
+| 512      | 4 (MPI)  | 0.031760     | 8.452      | 1.992434   | 49.810841  |
 [VALIDACAO] 4 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
 [VALIDACAO] 4 (MPI) : SUCESSO
-| 512      | BLAS     | 0.012735     | 21.078     | -          | -          |
+| 512      | BLAS     | 0.011011     | 24.379     | -          | -          |
 [VALIDACAO] BLAS    : Diferenca Relativa Maxima = 0.000000e+00
 [VALIDACAO] BLAS    : SUCESSO
 |----------|----------|--------------|------------|------------|------------|
 
 [LOG] Executando testes para matriz de tamanho 1024x1024...
-| 1024     | 1 (Seq)  | 0.439127     | 4.890      | 1.00x      | 100.00%    |
-| 1024     | 2 (OpenMP) | 0.267751     | 8.020      | 1.640058   | 82.002915  |
+| 1024     | 1 (Seq)  | 0.488401     | 4.397      | 1.00x      | 100.00%    |
+| 1024     | 2 (OpenMP) | 0.335521     | 6.400      | 1.455649   | 72.782464  |
 [VALIDACAO] 2 (OpenMP): Diferenca Relativa Maxima = 0.000000e+00
 [VALIDACAO] 2 (OpenMP): SUCESSO
-| 1024     | 4 (OpenMP) | 0.166301     | 12.913     | 2.640551   | 66.013766  |
+| 1024     | 4 (OpenMP) | 0.156351     | 13.735     | 3.123759   | 78.093984  |
 [VALIDACAO] 4 (OpenMP): Diferenca Relativa Maxima = 0.000000e+00
 [VALIDACAO] 4 (OpenMP): SUCESSO
-| 1024     | 2 (MPI)  | 0.293704     | 7.312      | 1.495136   | 74.756801  |
+| 1024     | 2 (MPI)  | 0.232249     | 9.246      | 2.102922   | 105.146124 |
 [VALIDACAO] 2 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
 [VALIDACAO] 2 (MPI) : SUCESSO
-| 1024     | 4 (MPI)  | 0.157017     | 13.677     | 2.796684   | 69.917097  |
+| 1024     | 4 (MPI)  | 0.150420     | 14.277     | 3.246925   | 81.173129  |
 [VALIDACAO] 4 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
 [VALIDACAO] 4 (MPI) : SUCESSO
-| 1024     | BLAS     | 0.062688     | 34.257     | -          | -          |
+| 1024     | BLAS     | 0.072096     | 29.786     | -          | -          |
 [VALIDACAO] BLAS    : Diferenca Relativa Maxima = 0.000000e+00
 [VALIDACAO] BLAS    : SUCESSO
 |----------|----------|--------------|------------|------------|------------|
 
 [LOG] Executando testes para matriz de tamanho 2048x2048...
-| 2048     | 1 (Seq)  | 3.456627     | 4.970      | 1.00x      | 100.00%    |
-| 2048     | 2 (OpenMP) | 2.153377     | 7.978      | 1.605212   | 80.260596  |
+| 2048     | 1 (Seq)  | 3.288167     | 5.225      | 1.00x      | 100.00%    |
+| 2048     | 2 (OpenMP) | 2.123108     | 8.092      | 1.548752   | 77.437577  |
 [VALIDACAO] 2 (OpenMP): Diferenca Relativa Maxima = 0.000000e+00
 [VALIDACAO] 2 (OpenMP): SUCESSO
-| 2048     | 4 (OpenMP) | 1.447985     | 11.865     | 2.387199   | 59.679965  |
+| 2048     | 4 (OpenMP) | 1.303404     | 13.181     | 2.522754   | 63.068849  |
 [VALIDACAO] 4 (OpenMP): Diferenca Relativa Maxima = 0.000000e+00
 [VALIDACAO] 4 (OpenMP): SUCESSO
-| 2048     | 2 (MPI)  | 2.229034     | 7.707      | 1.550729   | 77.536430  |
+| 2048     | 2 (MPI)  | 2.561288     | 6.708      | 1.283794   | 64.189718  |
 [VALIDACAO] 2 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
 [VALIDACAO] 2 (MPI) : SUCESSO
-| 2048     | 4 (MPI)  | 1.349554     | 12.730     | 2.561310   | 64.032739  |
+| 2048     | 4 (MPI)  | 1.283829     | 13.382     | 2.561218   | 64.030462  |
 [VALIDACAO] 4 (MPI) : Diferenca Relativa Maxima = 0.000000e+00
 [VALIDACAO] 4 (MPI) : SUCESSO
-| 2048     | BLAS     | 0.602575     | 28.511     | -          | -          |
+| 2048     | BLAS     | 0.389620     | 44.094     | -          | -          |
 [VALIDACAO] BLAS    : Diferenca Relativa Maxima = 0.000000e+00
 [VALIDACAO] BLAS    : SUCESSO
 |----------|----------|--------------|------------|------------|------------|

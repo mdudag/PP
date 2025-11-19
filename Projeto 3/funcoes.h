@@ -12,27 +12,32 @@
 #include <cblas.h>
 #include <immintrin.h>
 
+// Definicao do tipo de funcao
 typedef void (*func_matriz)(double* A, double* B, double* C, int tam);
 
+// Funcoes auxiliares de IO
 void imprimir_informacoes_iniciais(FILE *file, char nome_projeto[50]);
 void imprimir_hardware(FILE *file);
 void imprimir_matriz(double *M, int n, FILE *file);
 
+// Funcoes auxiliares das funcoes dgemm
 double* aloca_matriz(int n);
 void inicializa_matrizes(double *A, double *B, double *C, int n);
 void zera_matriz(double *C, int n);
 void dgemm_local_blocos(double *A, double *B, double *C, int n, int l_rows); 
 
+// Funcoes dgemm
 void dgemm_sequencial(double *A, double *B, double *C, int n);
 void dgemm_paralelo_openMP(double *A, double *B, double *C, int n);
 void dgemm_mpi_wrapper(double *A, double *B, double *C, int n);
 void dgemm_blas_wrapper(double* A, double* B, double* C, int tam);
 
-double teste(FILE *file, func_matriz funcao, int NUM_REPETICOES, 
-             double *A, double *B, double *C, int tam_matriz, char *num_threads, 
-             char *speedup, char *eficiencia, double tempo_seq_medio);
+// Funcoes de medicao e validacao
+double medir_tempo_execucao(func_matriz funcao, int NUM_REPETICOES, double *A, double *B, double *C, int tam_matriz);
 void set_mpi_state(MPI_Comm comm);
-
-void valida_resultado(FILE *file, double *C_correto, double *C_calculado, int n, char *versao);
+double valida_resultado(double *C_correto, double *C_calculado, int n);
+void registrar_resultado(FILE *file, int tam_matriz, char *versao, 
+                         double tempo, double tempo_seq_base, int n_threads, 
+                         double erro_max);
 
 #endif

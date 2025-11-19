@@ -1,7 +1,6 @@
 #include "funcoes.h"
 
 int main(int argc, char *argv[]) {
-  
   int rank, size;
   
   MPI_Init(&argc, &argv);
@@ -10,7 +9,7 @@ int main(int argc, char *argv[]) {
 
   FILE *file = NULL;
 
-  char nomeFile[100] = "./testes/teste3_mpi_processo2-4.txt";
+  char nomeFile[100] = "./testes/teste4_.txt";
 
   if (rank == 0) {
     file = fopen(nomeFile, "w");
@@ -20,7 +19,7 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    imprimir_informacoes_iniciais(file, "   Projeto 2 — Multiplicacao de Matrizes (DGEMM) com MPI");
+    imprimir_informacoes_iniciais(file, "   Projeto 3 — Multiplicação de Matrizes (DGEMM) com CUDA");
   }
 
   // int tam_matrizes[] = {512, 1024, 2048, 4096};
@@ -35,19 +34,17 @@ int main(int argc, char *argv[]) {
 
   if (rank == 0) {
     fprintf(file, "\n--- INICIO DOS EXPERIMENTOS (Media de %d execucoes) ---\n", NUM_REPETICOES);
-    fprintf(file, "| %-8s | %-8s | %-12s | %-10s | %-10s | %-10s |\n",
-           "Tamanho", "Threads", "Tempo (s)", "GFLOPS", "Speedup", "Eficiencia");
-    fprintf(file, "|----------|----------|--------------|------------|------------|------------|\n");
+    // "Diff. Max" = Valor numérico do erro
+    // "VALIDACAO" = Texto SUCESSO/FALHOU
+    fprintf(file, "| %-8s | %-12s | %-12s | %-10s | %-10s | %-10s | %-12s | %-9s |\n",
+           "Tamanho", "Versao", "Tempo (s)", "GFLOPS", "Speedup", "Eficiencia", "Diff. Max", "Validacao");
+    fprintf(file, "|----------|--------------|--------------|------------|------------|------------|--------------|-----------|\n");
   }
 
   for (int idx = 0; idx < num_tam; idx++) {
-    
-    char speedup_buf[20] = ""; 
-    char eficiencia_buf[20] = "";
-    char n_threads_str[20] = "";
-
     int tam_matriz = tam_matrizes[idx];
 
+    // Visualizacao no terminal
     if (rank == 0) {
         printf("--> Testes para matriz %dx%d...\n", tam_matriz, tam_matriz);
         if (tam_matriz == 4096) printf("    (Isso pode demorar alguns minutos no teste sequencial, aguarde...)\n");
@@ -59,7 +56,7 @@ int main(int argc, char *argv[]) {
     double *C = NULL;
     double *C_correto = NULL; 
     
-    double tempo_seq_medio = 0.0;
+    double tempo_seq = 0.0;
 
     if (rank == 0) {
       A = aloca_matriz(tam_matriz);
@@ -68,88 +65,82 @@ int main(int argc, char *argv[]) {
       C_correto = aloca_matriz(tam_matriz); 
 
       inicializa_matrizes(A, B, C, tam_matriz);
+      
+      // --- 1. Versao Sequencial ---
 
-      fprintf(file, "\n[LOG] Executando testes para matriz de tamanho %dx%d...\n", tam_matriz, tam_matriz);
-      
-      strcpy(n_threads_str, "1 (Seq)");
-      strcpy(speedup_buf, "1.00x");
-      strcpy(eficiencia_buf, "100.00%");
-      tempo_seq_medio = teste(file, dgemm_sequencial, NUM_REPETICOES, 
-                                     A, B, C, tam_matriz, n_threads_str, speedup_buf, 
-                                     eficiencia_buf, 0);
-      
+      tempo_seq = medir_tempo_execucao(dgemm_sequencial, NUM_REPETICOES, A, B, C, tam_matriz);
       memcpy(C_correto, C, (size_t)tam_matriz * tam_matriz * sizeof(double));
+      registrar_resultado(file, tam_matriz, "1 (Seq)", tempo_seq, tempo_seq, 1, 0.0);
 
+      // --- 2. Versao com OpenMP ---
 
       for (int t = 0; t < num_thread_counts; t++) {
-        speedup_buf[0] = '\0';
-        eficiencia_buf[0] = '\0';
+        int n_th = contagens_threads[t];
+        char nome_versao[20];
+        sprintf(nome_versao, "%d (OpenMP)", n_th);
         
-        int n_threads = contagens_threads[t];
-        sprintf(n_threads_str, "%d (OpenMP)", n_threads);
-        omp_set_num_threads(n_threads);
+        omp_set_num_threads(n_th);
         
-        teste(file, dgemm_paralelo_openMP, NUM_REPETICOES, A, B, C, 
-              tam_matriz, n_threads_str, speedup_buf, eficiencia_buf, tempo_seq_medio);
-
-        valida_resultado(file, C_correto, C, tam_matriz, n_threads_str); 
+        // Executa, valida e registra
+        double tempo = medir_tempo_execucao(dgemm_paralelo_openMP, NUM_REPETICOES, A, B, C, tam_matriz);
+        double erro = valida_resultado(C_correto, C, tam_matriz);
+        registrar_resultado(file, tam_matriz, nome_versao, tempo, tempo_seq, n_th, erro);
       }
     } 
 
-    MPI_Bcast(&tempo_seq_medio, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    // --- 3. Versao com MPI ---
+    MPI_Bcast(&tempo_seq, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     
     for (int p = 0; p < num_thread_counts; p++) {
         int np_teste = contagens_threads[p];
         
-        if (size < np_teste) continue; // Pula se não tiver processos suficientes
+        // Se não houver processos suficientes lançados, pula
+        if (size < np_teste) continue; 
 
-        // Cria subgrupo
+        // Criação de Sub-comunicador para testar 2, 4, 6 processos isoladamente
         int color = (rank < np_teste) ? 0 : MPI_UNDEFINED;
         MPI_Comm sub_comm;
         MPI_Comm_split(MPI_COMM_WORLD, color, rank, &sub_comm);
 
         if (sub_comm != MPI_COMM_NULL) {
-            // 1. Configura o estado global para o Wrapper saber quem é quem
+            // Passa o sub-comunicador para o wrapper saber quem é quem neste grupo
             set_mpi_state(sub_comm);
+            
+            // Todos do grupo calculam
+            double tempo = medir_tempo_execucao(dgemm_mpi_wrapper, NUM_REPETICOES, A, B, C, tam_matriz);
 
-            // 2. Prepara strings para o log
-            char mpi_str[20];
-            char speedup_buf[20] = "";
-            char eficiencia_buf[20] = "";
-            sprintf(mpi_str, "%d (MPI)", np_teste);
+            // Validação e Registro
+            int sub_rank;
+            MPI_Comm_rank(sub_comm, &sub_rank);
 
-            // 3. CHAMA A FUNÇÃO TESTE PADRÃO!
-            // O rank 0 do subgrupo vai escrever no arquivo
-            // Todos do subgrupo vão executar o cálculo
-            teste(file, dgemm_mpi_wrapper, NUM_REPETICOES, A, B, C, 
-                  tam_matriz, mpi_str, speedup_buf, eficiencia_buf, tempo_seq_medio);
-
-            // 4. Validação (Apenas Rank 0 Global faz, pois ele tem C_correto)
-            if (rank == 0) {
-                valida_resultado(file, C_correto, C, tam_matriz, mpi_str);
+            if (rank == 0 && sub_rank == 0) {
+                char nome_versao[20];
+                sprintf(nome_versao, "%d (MPI)", np_teste);
+                
+                double erro = valida_resultado(C_correto, C, tam_matriz);
+                
+                registrar_resultado(file, tam_matriz, nome_versao, tempo, tempo_seq, np_teste, erro);
             }
 
-            // 5. Limpa estado
+            // Limpeza do estado MPI
             set_mpi_state(MPI_COMM_NULL);
             MPI_Comm_free(&sub_comm);
         }
-        
-        MPI_Barrier(MPI_COMM_WORLD); // Todos esperam o teste terminar
+        // Sincroniza o mundo todo antes de ir para o próximo teste MPI
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 
+    // --- 4. Versao com BLAS ---
+
     if (rank == 0) {
-      strcpy(n_threads_str, "BLAS");
-      strcpy(speedup_buf, "-");
-      strcpy(eficiencia_buf, "-");
-
-      openblas_set_num_threads(1);  // Blas seqencial
-      teste(file, dgemm_blas_wrapper, NUM_REPETICOES, A, B, C,
-            tam_matriz, n_threads_str, speedup_buf, eficiencia_buf, 0.0);
-            
-      valida_resultado(file, C_correto, C, tam_matriz, n_threads_str);
-
-      fprintf(file, "|----------|----------|--------------|------------|------------|------------|\n");
+      openblas_set_num_threads(1); // Blas sequencial
       
+      // Executa, valida e registra
+      double tempo = medir_tempo_execucao(dgemm_blas_wrapper, NUM_REPETICOES, A, B, C, tam_matriz);
+      double erro = valida_resultado(C_correto, C, tam_matriz);
+      registrar_resultado(file, tam_matriz, "BLAS", tempo, 0.0, 0, erro);
+
+      fprintf(file, "|----------|--------------|--------------|------------|------------|------------|--------------|-----------|\n");
       free(A); free(B); free(C); free(C_correto); 
     }
   } 
