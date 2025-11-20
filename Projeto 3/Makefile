@@ -25,7 +25,7 @@ run: all
 clean:
 	@echo "Limpando arquivos gerados..."
 	rm -f $(TARGET)
-	rm -f testes/teste7_par_mpi.txt
+	rm -f testes/teste4_plotar.txt
 	rm -rf plots_mpi
 	rm -f *.o
 

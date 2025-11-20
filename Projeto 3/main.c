@@ -7,14 +7,14 @@ int main(int argc, char *argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+  // Inicia arquivo
   FILE *file = NULL;
-
-  char nomeFile[100] = "./testes/teste4_.txt";
+  char nomeFile[100] = "./testes/teste4_plotar.txt";
 
   if (rank == 0) {
     file = fopen(nomeFile, "w");
     if (!file) {
-      printf("Erro ao abrir o arquivo", nomeFile, "\n");
+      printf("Erro ao abrir o arquivo %s\n", nomeFile);
       MPI_Abort(MPI_COMM_WORLD, 1);
       return 1;
     }
@@ -22,20 +22,18 @@ int main(int argc, char *argv[]) {
     imprimir_informacoes_iniciais(file, "   Projeto 3 — Multiplicação de Matrizes (DGEMM) com CUDA");
   }
 
-  // int tam_matrizes[] = {512, 1024, 2048, 4096};
-  int tam_matrizes[] = {512, 1024, 2048};
+  int tam_matrizes[] = {512, 1024, 2048, 4096};
+  // int tam_matrizes[] = {512, 1024, 2048}; // Teste rapido
   int num_tam = sizeof(tam_matrizes) / sizeof(int);
   
   // int contagens_threads[] = {2, 4, 6};
-  int contagens_threads[] = {2, 4};
+  int contagens_threads[] = {2, 4}; // Teste no pc de Duda
   int num_thread_counts = sizeof(contagens_threads) / sizeof(int);
   
   const int NUM_REPETICOES = 3;
 
   if (rank == 0) {
     fprintf(file, "\n--- INICIO DOS EXPERIMENTOS (Media de %d execucoes) ---\n", NUM_REPETICOES);
-    // "Diff. Max" = Valor numérico do erro
-    // "VALIDACAO" = Texto SUCESSO/FALHOU
     fprintf(file, "| %-8s | %-12s | %-12s | %-10s | %-10s | %-10s | %-12s | %-9s |\n",
            "Tamanho", "Versao", "Tempo (s)", "GFLOPS", "Speedup", "Eficiencia", "Diff. Max", "Validacao");
     fprintf(file, "|----------|--------------|--------------|------------|------------|------------|--------------|-----------|\n");
@@ -149,8 +147,7 @@ int main(int argc, char *argv[]) {
     fprintf(file, "\n[LOG] Experimentos finalizados.\n");
     fclose(file);
   }
-
-  MPI_Finalize();
   
+  MPI_Finalize();
   return 0;
 }
