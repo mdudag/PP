@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 
   // Inicia arquivo
   FILE *file = NULL;
-  char nomeFile[100] = "./testes/teste4_plotar.txt";
+  char nomeFile[100] = "./testes/teste8_cuda.txt";
 
   if (rank == 0) {
     file = fopen(nomeFile, "w");
@@ -26,8 +26,8 @@ int main(int argc, char *argv[]) {
   // int tam_matrizes[] = {512, 1024, 2048}; // Teste rapido
   int num_tam = sizeof(tam_matrizes) / sizeof(int);
   
-  // int contagens_threads[] = {2, 4, 6};
-  int contagens_threads[] = {2, 4}; // Teste no pc de Duda
+  int contagens_threads[] = {2, 4, 6};
+  // int contagens_threads[] = {2, 4}; // Teste no pc de Duda
   int num_thread_counts = sizeof(contagens_threads) / sizeof(int);
   
   const int NUM_REPETICOES = 3;
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
     // Visualizacao no terminal
     if (rank == 0) {
         printf("--> Testes para matriz %dx%d...\n", tam_matriz, tam_matriz);
-        if (tam_matriz == 4096) printf("    (Isso pode demorar alguns minutos no teste sequencial, aguarde...)\n");
+        if (tam_matriz == 4096) printf("    (Isso pode demorar alguns minutos, aguarde...)\n");
         fflush(stdout); // Força a escrita na tela imediatamente
     }
 

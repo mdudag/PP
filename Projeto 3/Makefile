@@ -7,7 +7,7 @@ LIBS = -lopenblas -lm
 SRCS = main.c funcoes.c
 TARGET = main
 
-# Variáveis padrão para rodar que podem ser alteradas na hora de chamar o make
+# Variável padrão para rodar que podem ser alteradas na hora de chamar o make
 NP ?= 6
 
 all: $(TARGET)
@@ -25,8 +25,8 @@ run: all
 clean:
 	@echo "Limpando arquivos gerados..."
 	rm -f $(TARGET)
-	rm -f testes/teste4_plotar.txt
-	rm -rf plots_mpi
+	rm -rf testes
+	rm -rf plots
 	rm -f *.o
 
 .PHONY: all run clean

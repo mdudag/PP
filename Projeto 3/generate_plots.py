@@ -207,6 +207,6 @@ def process_and_plot(chosen_file_name):
         print(df_plot[['Tamanho', 'Threads_str', 'Tempo', 'Speedup', 'Eficiencia']].to_string(index=False))
 
 if __name__ == "__main__":
-    log_principal = "teste4_plotar.txt" 
+    log_principal = "teste8_cuda.txt" 
     process_and_plot(log_principal)
     print("\nConcluido.")

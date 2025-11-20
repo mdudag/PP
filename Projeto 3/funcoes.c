@@ -9,22 +9,32 @@ static int g_mpi_size = 1;
 
 void dgemm_sequencial(double *A, double *B, double *C, int n) {
   long n_long = n;
-  long block = 256;
+  long block = SIZE_BLOCK;
   long ii, jj, kk;
   long i, j, k;
 
+  // Cache block + registradores AVX
+
+  // Iteram sobre os blocos
   for (ii = 0; ii < n_long; ii += block) {
     for (kk = 0; kk < n_long; kk += block) {
       for (jj = 0; jj < n_long; jj += block) {
-		for (i = ii; i < ii + block && i < n_long; i++) {
+        // Iteram dentro dos blocos sobre os doubles
+		    for (i = ii; i < ii + block && i < n_long; i++) {
           for (k = kk; k < kk + block && k < n_long; k++) {
+            // Guarda um valor de A
             double a_ik = A[n_long * i + k];
+            // Copia o mesmo valor 4 vezes em um registrador
             __m256d mA = _mm256_set1_pd(a_ik);
             for (j = jj; j < jj + block && j < n_long; j+=4) {
+              // Copia 4 doubles de B em um registrador
               __m256d mB = _mm256_loadu_pd(&B[n_long * k + j]);
+              // Copia 4 doubles de C em um registrador
               __m256d mC = _mm256_loadu_pd(&C[n_long * i + j]);
-
+              
+              // Faz o calculo de um double de C em uma unica instrucao
               mC = _mm256_fmadd_pd(mA, mB, mC);
+              // Salva o resultado na memoria
               _mm256_storeu_pd(&C[n_long * i + j], mC);
             }
           }
@@ -36,20 +46,25 @@ void dgemm_sequencial(double *A, double *B, double *C, int n) {
 
 void dgemm_paralelo_openMP(double *A, double *B, double *C, int n) {
   long n_long = n;
-  long block = 256;
+  long block = SIZE_BLOCK;
   long ii, jj, kk;
   long i, j, k;
 
-  #pragma omp parallel for
+  // Divide de forma igual as linhas de blocos entre as threads criadas e priva as outras variáveis
+  #pragma omp parallel for private(kk, jj, i, j, k) schedule(static)
   for (ii = 0; ii < n_long; ii += block) {
     for (kk = 0; kk < n_long; kk += block) {
       for (jj = 0; jj < n_long; jj += block) {
-		for (i = ii; i < ii + block && i < n_long; i++) {
-          for (k = kk; k < kk + block && k < n_long; k++) {
+        long i_end = (ii + block > n_long)? n_long: ii + block;
+        long k_end = (kk + block > n_long)? n_long: kk + block;
+        long j_end = (jj + block > n_long)? n_long: jj + block;
+
+        for (i = ii; i < i_end; i++) {
+          for (k = kk; k < k_end; k++) {
             double a_ik = A[n_long * i + k];
             __m256d mA = _mm256_set1_pd(a_ik);
             
-            for (j = jj; j < jj + block && j < n_long; j+=4) {
+            for (j = jj; j < j_end; j+=4) {
               __m256d mB = _mm256_loadu_pd(&B[n_long * k + j]);
               __m256d mC = _mm256_loadu_pd(&C[n_long * i + j]);
 
@@ -57,7 +72,7 @@ void dgemm_paralelo_openMP(double *A, double *B, double *C, int n) {
               _mm256_storeu_pd(&C[n_long * i + j], mC);
             }
           }
-        }
+        } 
       }
     }
   }
@@ -65,14 +80,13 @@ void dgemm_paralelo_openMP(double *A, double *B, double *C, int n) {
 
 void dgemm_local_blocos(double *A_loc, double *B_glob, double *C_loc, int n_global, int local_rows) {
   long n_long = n_global;
-  long block = 256;
+  long block = SIZE_BLOCK;
   long ii, jj, kk;
   long i, j, k;
 
   for (ii = 0; ii < local_rows; ii += block) {
     for (kk = 0; kk < n_long; kk += block) {
       for (jj = 0; jj < n_long; jj += block) {
-        
         for (i = ii; i < ii + block && i < local_rows; i++) {
           for (k = kk; k < kk + block && k < n_long; k++) {
             double a_ik = A_loc[n_long * i + k];
@@ -99,45 +113,51 @@ void dgemm_mpi_wrapper(double *A_global, double *B_global, double *C_global, int
     int size = g_mpi_size;
     
     int m = n, k = n;
-    int base = m / size;
-    int rem = m % size;
-    int local_rows = (rank < rem) ? base + 1 : base;
+    int base = m / size;  // Linhas de cada processo
+    int rem = m % size;   // Linhas que sobraram
+    // Distrubui as linhas que sobraram aos rem primeiros processos
+    int local_rows = (rank < rem) ? base + 1 : base;  
 
+    // Alocacao de memoria local
     double *A_loc = (double *) malloc((size_t)local_rows * k * sizeof(double));
     double *C_loc = (double *) calloc((size_t)local_rows * n, sizeof(double));
     double *B_loc = (double *) malloc((size_t)k * n * sizeof(double));
 
-    // TRUQUE: Inicializa com endereço dummy para calar o warning do compilador
-    int dummy = 0;
-    int *sendcounts = &dummy;
-    int *displs = &dummy;
+    if (!A_loc || !C_loc || !B_loc) {
+      fprintf(stderr, "Erro : Falha de alocacao de memoria no Rank %d\n", rank);
+      MPI_Abort(MPI_COMM_WORLD, -1);
+    }
+
+    // Inicializa com endereço para calar o warning do compilador se rank não for 0
+    int *sendcounts = NULL;
+    int *displs = NULL;
     
-    // Apenas Rank 0 aloca de verdade
     if (rank == 0) {
+      // Aloca vetores de controle
         sendcounts = (int*) malloc(size * sizeof(int));
         displs = (int*) malloc(size * sizeof(int));
         
         int offset = 0;
         for (int r = 0; r < size; r++) {
             int r_rows = (r < rem) ? base + 1 : base;
-            sendcounts[r] = r_rows * k;
-            displs[r] = offset;
+            sendcounts[r] = r_rows * k; // Quantidade de linhas para enviar
+            displs[r] = offset;         // Deslocamento
             offset += sendcounts[r];
         }
     }
 
-    // 1. Distribuição de A
+    // Distribuição de A
     MPI_Scatterv(A_global, sendcounts, displs, MPI_DOUBLE, 
                  A_loc, local_rows * k, MPI_DOUBLE, 0, g_mpi_comm);
 
-    // 2. Broadcast de B
+    // Broadcast de B
     if (rank == 0) memcpy(B_loc, B_global, (size_t)k * n * sizeof(double));
     MPI_Bcast(B_loc, k * n, MPI_DOUBLE, 0, g_mpi_comm);
 
-    // 3. Cálculo Local
+    // Calculo local
     dgemm_local_blocos(A_loc, B_loc, C_loc, n, local_rows);
 
-    // 4. Recolher C (Recalcula offsets se for Rank 0)
+    // Rank 0 recalcula os vetores de controle e recolhe C
     if (rank == 0) {
         int offset = 0;
         for (int r = 0; r < size; r++) {
@@ -154,7 +174,7 @@ void dgemm_mpi_wrapper(double *A_global, double *B_global, double *C_global, int
     // Limpeza
     free(A_loc); free(B_loc); free(C_loc);
     
-    // Só libera sendcounts/displs se foram alocados (Rank 0)
+    // Rank 0 libera vetores 
     if (rank == 0) { free(sendcounts); free(displs); }
 }
 
@@ -166,19 +186,21 @@ void dgemm_blas_wrapper(double* A, double* B, double* C, int tam) {
 
 // -- Funcoes de Medicao e Validacao
 
-// funcao teste renomeada e gora retorna o TEMPO e não imprime nada
 double medir_tempo_execucao(func_matriz funcao, int NUM_REPETICOES, double *A, double *B, double *C, int tam_matriz) {
   int is_mpi = (g_mpi_comm != MPI_COMM_NULL);
   double tempo_total = 0.0;
 
   for (int rep = 0; rep < NUM_REPETICOES; rep++) {
+    // Limpa a matriz C para novo calculo
     if (!is_mpi || g_mpi_rank == 0) zera_matriz(C, tam_matriz);
     
+    // Barreira inicial para esperar todos os processos
     if (is_mpi) MPI_Barrier(g_mpi_comm);
     double t0 = omp_get_wtime();
     
-    funcao(A, B, C, tam_matriz);
+    funcao(A, B, C, tam_matriz);  // executa uma versao
     
+    // Barreira final para esperar todos os processos
     if (is_mpi) MPI_Barrier(g_mpi_comm);
     double t1 = omp_get_wtime();
     
@@ -188,7 +210,6 @@ double medir_tempo_execucao(func_matriz funcao, int NUM_REPETICOES, double *A, d
   return tempo_total / NUM_REPETICOES;
 }
 
-// Agora retorna o ERRO (diff maxima) e não imprime nada
 double valida_resultado(double *C_correto, double *C_calculado, int n) {
     double max_rel_diff = 0.0;
     long total_elementos = (long)n * n;
@@ -212,24 +233,24 @@ void registrar_resultado(FILE *file, int tam_matriz, char *versao,
                          double tempo, double tempo_seq_base, int n_threads, 
                          double erro_max) {
     
-    // Define Status Visual
+    // Define status da validacao
     char *status_val = (erro_max < 1e-9) ? "SUCESSO" : "FALHOU";
     
     // Calcula GFLOPS
     double gflops = (2.0 * tam_matriz * tam_matriz * tam_matriz / tempo) / 1e9;
 
     // Formata e imprime na tabela
-    // Caso 1: BLAS com n_threads=0
+    // BLAS com n_threads=0
     if (n_threads == 0) {
         fprintf(file, "| %-8d | %-12s | %-12.6f | %-10.3f | %-10s | %-10s | %-12.2e | %-9s |\n",
               tam_matriz, versao, tempo, gflops, "-", "-", erro_max, status_val);
     } 
-    // Caso 2: Sequencial
+    // Sequencial
     else if (tempo_seq_base <= 0.0 || strcmp(versao, "1 (Seq)") == 0) {
         fprintf(file, "| %-8d | %-12s | %-12.6f | %-10.3f | %-10s | %-10s | %-12.2e | %-9s |\n",
               tam_matriz, versao, tempo, gflops, "1.00x", "100.00%", erro_max, status_val);
     } 
-    // Caso 3: Paralelo (OpenMP ou MPI)
+    // Paralelo (OpenMP ou MPI)
     else {
         double speedup = tempo_seq_base / tempo;
         double eficiencia = (speedup / n_threads) * 100.0;

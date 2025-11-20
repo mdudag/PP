@@ -12,6 +12,8 @@
 #include <cblas.h>
 #include <immintrin.h>
 
+#define SIZE_BLOCK 128
+
 // Definicao do tipo de funcao
 typedef void (*func_matriz)(double* A, double* B, double* C, int tam);
 
