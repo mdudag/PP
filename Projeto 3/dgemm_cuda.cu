@@ -19,6 +19,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 __global__ void dgemm_naive_kernel(double *A, double *B, double *C, int N);
 __global__ void dgemm_tiled_kernel(double *A, double *B, double *C, int N);
 double get_time();
+int validate_results(int N, double *C_ref, double *C_test);
 
 int main() {
   // Inicia arquivo
@@ -204,4 +205,26 @@ double get_time() {
   struct timeval tv;
   gettimeofday(&tv, NULL);
   return tv.tv_sec + tv.tv_usec * 1e-6;
+}
+
+int validate_results(int N, double *C_ref, double *C_test) {
+  double max_diff = 0.0;
+  
+  for (int i = 0; i < N * N; ++i) {
+    double abs_diff = fabs(C_ref[i] - C_test[i]);
+    double rel_diff = abs_diff / (fabs(C_ref[i]) + EPSILON);
+    
+    if (rel_diff > max_diff) {
+      max_diff = rel_diff;
+    }
+  }
+
+  printf("   [Validação] Diferença Relativa Máx: %e ", max_diff);
+  if (max_diff < TOLERANCE) {
+    printf("(OK)\n");
+    return 1;
+  } else {
+    printf("(FALHA)\n");
+    return 0;
+  }
 }
