@@ -16,6 +16,10 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
   }
 }
 
+__global__ void dgemm_naive_kernel(double *A, double *B, double *C, int N);
+__global__ void dgemm_tiled_kernel(double *A, double *B, double *C, int N);
+double get_time();
+
 int main() {
   // Inicia arquivo
   FILE *file = NULL;
@@ -86,8 +90,7 @@ int main() {
 
     printf(" Executando CUDA Naive...       "); fflush(stdout);
     cudaCheckError(cudaMemset(d_C, 0, size_bytes));
-
-    dgemm_naive_kernel<<<blocksPerGrid, threadsPerBlock>>>(tam_matriz, ALPHA, d_A, d_B, BETA, d_C);
+    dgemm_naive_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, tam_matriz);
     cudaDeviceSynchronize();
 
     double start, end;
@@ -124,7 +127,7 @@ int main() {
 
     // Calculo do tempo
     start = get_time();
-    dgemm_tiled_kernel<<<blocksPerGrid, threadsPerBlock>>>(tam_matriz, ALPHA, d_A, d_B, BETA, d_C);
+    dgemm_tiled_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, tam_matriz);
     cudaCheckError(cudaDeviceSynchronize());
     double end = get_time();
 
@@ -149,20 +152,21 @@ int main() {
 
 // --- Kernels CUDA ---
 
-__global__ void dgemm_naive_kernel(int N, double alpha, double *A, double *B, double beta, double *C) {
-  int row = blockIdx.y * blockDim.y + threadIdx.y;
-  int col = blockIdx.x * blockDim.x + threadIdx.x;
+// Cada thread calcula 1 elemento de C
+__global__ void dgemm_naive_kernel(double *A, double *B, double *C, int N) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
 
-  if (row < N && col < N) {
-    double cValue = 0.0;
-    for (int k = 0; k < N; ++k) {
-        cValue += A[row * N + k] * B[k * N + col];
+    if (row < N && col < N) {
+        double sum = 0.0;
+        for (int k = 0; k < N; k++) {
+            sum += A[row * N + k] * B[k * N + col];
+        }
+        C[row * N + col] = sum;
     }
-    C[row * N + col] = alpha * cValue + beta * C[row * N + col];
-  }
 }
 
-__global__ void dgemm_tiled_kernel(int N, double alpha, double *A, double *B, double beta, double *C) {
+__global__ void dgemm_tiled_kernel(double *A, double *B, double *C, int N) {
   int tx = threadIdx.x;
   int ty = threadIdx.y;
 
@@ -176,22 +180,22 @@ __global__ void dgemm_tiled_kernel(int N, double alpha, double *A, double *B, do
 
   int numTiles = (N + BSIZE - 1) / BSIZE;
 
-  for (int m = 0; m < numTiles; ++m) {
-    int k = m * BSIZE + tx;
-    As[ty][tx] = (row < N && k < N) ? A[row*N + k] : 0.0;
-    k = m * BSIZE + ty;
-    Bs[ty][tx] = (k < N && col < N) ? B[k*N + col] : 0.0;
+  for (int m = 0; m < numTiles; m++) {
+    int n = m * BSIZE + tx;
+    As[ty][tx] = (row < N && n < N) ? A[row*N + n] : 0.0;
+    n = m * BSIZE + ty;
+    Bs[ty][tx] = (n < N && col < N) ? B[n*N + col] : 0.0;
 
     __syncthreads();
 
-    for (int k2 = 0; k2 < BSIZE; ++k2)
-      cValue += As[ty][k2] * Bs[k2][tx];
+    for (int k = 0; k < BSIZE; k++)
+      cValue += As[ty][k] * Bs[k][tx];
 
     __syncthreads();
   }
 
   if (row < N && col < N)
-    C[row*N + col] = alpha * cValue + beta * C[row*N + col];
+    C[row*N + col] = cValue;
 }
 
 // --- Funcao auxiliar do CUDA ---
