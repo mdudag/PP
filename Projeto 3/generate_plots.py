@@ -96,7 +96,7 @@ def process_and_plot(chosen_file_name):
 
     # cria paleta contínua baseada nos valores de N
     norm = mcolors.Normalize(vmin=min(sizes), vmax=max(sizes))
-    cmap = cm.get_cmap("tab10_r")  # pode usar plasma, inferno, turbo, magma...
+    cmap = cm.get_cmap("magma_r")  # pode usar plasma, inferno, turbo, magma...
 
     colors = {N: cmap(norm(N)) for N in sizes}
 
@@ -207,6 +207,6 @@ def process_and_plot(chosen_file_name):
         print(df_plot[['Tamanho', 'Threads_str', 'Tempo', 'Speedup', 'Eficiencia']].to_string(index=False))
 
 if __name__ == "__main__":
-    log_principal = "teste8_cuda.txt" 
+    log_principal = "teste7_todos_block128.txt" 
     process_and_plot(log_principal)
     print("\nConcluido.")

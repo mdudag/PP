@@ -1,4 +1,4 @@
-# Título
+# Multiplicação de Matrizes (DGEMM) com CUDA
 
 *Projeto 3*
 
@@ -12,31 +12,34 @@
 
 ## Arquivos
 
-Referente às funções dgemm e auxiliares:
-* ```funcoes.h```: Contém as declarações
-* ```funcoes.c```: Contém os códigos das funções
-* ```main.c```: Função principal que as chama
-* ```Makefile.mak```: Arquivo de compilação que constrói o executável híbrido main
+* ```dgemm_cuda.cu```: Contém o código da versão dgemm do CUDA
+* ```funcoes.c```: Contém os códigos das funções dgemm anteriores e auxiliares
+* ```funcoes.h```: Contém as declarações das funções
+* ```main.c```: Função principal que chama as versões dgemm anteriores 
+
+Referente a execução e análise:
+* ```Makefile```: Arquivo de compilação que constrói o executável híbrido main
 * ```generate_plots.py```: Script Python para analisar os logs (.txt) e gerar os gráficos de desempenho (.png)
 
 ## Objetivos do Projeto
 
+Este projeto tem como objetivo principal dar continuidade aos desenvolvimentos anteriores do algoritmo DGEMM (sequencial, OpenMP e MPI), avançando agora para o paradigma de programação em GPU por meio de CUDA. Nesta etapa, busca-se explorar o paralelismo massivo das GPUs e comparar seu desempenho com os demais modelos de execução paralela. Os objetivos específicos são:
 
+  1. Implementar uma versão da multiplicação de matrizes DGEMM utilizando CUDA.
+  2. Aplicar conceitos de hierarquia de memória (global, compartilhada, constante e registradores).
+  3. Comparar o desempenho obtido com as versões anteriores: sequencial, OpenMP e MPI.
+  4. Avaliar eficiência, speedup e escalabilidade entre os diferentes modelos de paralelismo.
+  5. Implementar e analisar testes de corretude numérica, considerando possíveis erros de ponto flutuante.
 
 ## Instalação
 
-O projeto foi desenvolvido para um ambiente Linux (Ubuntu, via WSL) e requer as seguintes bibliotecas:
+O projeto foi desenvolvido para um ambiente Linux (Ubuntu, via WSL) e requer o seguintes:
 
-### 1. Compiladores e MPI:
+### 1. REquisitos para compilar CUDA:
 
-O projeto usa a biblioteca de MPI chamada Open MPI
-
-~~~bash
-sudo apt update
-sudo apt upgrade -y
-sudo apt install -y build-essential
-sudo apt install -y openmpi-bin libopenmpi-dev
-~~~
+* Criar conta para usar a GPU da estação de trabalho hapi-diagnostico.
+* GPU NVIDIA compatível com CUDA.
+* CUDA Toolkit instalado (nvcc disponível no PATH).
   
 ### 2. Biblioteca de Álgebra Linear (BLAS):
     
@@ -60,13 +63,11 @@ sudo apt install -y libopenblas-dev
   sudo apt install -y python3-pip python3-pandas python3-matplotlib python3-numpy
   ~~~
     
-## Compilar, Executar e Analisar
-
-O fluxo de trabalho completo é dividido em três etapas:
-
-### 1. Compilar (Gerar o executável main)
+## Compilar e Executar (MUDAR)
 
 **Use o comando make:**
+
+### Versões dgemm Anteriores
 
 * Execução padrão com 4 threads
 
@@ -74,37 +75,37 @@ O fluxo de trabalho completo é dividido em três etapas:
   make run
   ~~~
 
-* Mudando número de Threads e tamanho da matriz
-
-  ~~~bash
-  make run NP=6 N=4096
-  ~~~
-
-**Teste sem make:**
-
-~~~bash
-mpicc -O3 -fopenmp -march=native -Wall -o main main.c funcoes.c -lopenblas -lm
-~~~
-
-*Isso irá compilar main.c e funcoes.c e criar o executável main.*
-
-### 2. Executar (Gerar o Log de Teste)
-
-* Usando comando make
+* Mudando número de Threads
 
   ~~~bash
   make run NP=6
   ~~~
 
-* Usando mpirun
-
-  ~~~bash
-  mpirun -np 6 ./main
-  ~~~
+*Isso irá compilar main.c e funcoes.c, criar o executável main e executá-lo.*
 
 *Usamos 6 processos MPI para corresponder ao número de núcleos físicos do hardware (AMD Ryzen 5 5600G).*
 
-### 3. Analisar (Gerar os Gráficos)
+### Versão dgemm CUDA
+
+  ~~~bash
+  make run_cuda
+  ~~~
+
+*Isso irá compilar dgemm_cuda.cu e funcoes.c, criar o executável dgemm_cuda e executá-lo.*
+
+## Validar (MUDAR)
+
+Para cada tamanho N, o programa imprime:
+
+- Tempo CPU  
+- Tempo GPU  
+- GFLOPS  
+- Speedup  
+- Validação da saída GPU comparada com o resultado sequencial  
+
+Esse formato facilita análise de desempenho e corretude.
+
+## Analisar (Gerar os Gráficos)
 
 Após a execução, use o script Python para analisar os logs e gerar os gráficos.
 
@@ -112,4 +113,11 @@ Após a execução, use o script Python para analisar os logs e gerar os gráfic
 python3 generate_plots.py
 ~~~
 
+(MUDAR)
 O script irá processar automaticamente os arquivos teste6_par_openMP.txt (se existir) e teste7_par_mpi.txt, salvando todos os gráficos .png nas suas respectivas pastas (plots_teste6_par_openMP/ e plots_teste7_par_mpi/).
+
+## Limpar arquivos compilados
+
+~~~bash
+make clean
+~~~
