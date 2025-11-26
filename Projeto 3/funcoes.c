@@ -218,7 +218,6 @@ double medir_tempo_execucao(func_matriz funcao, int NUM_REPETICOES, double *A, d
 
 double valida_resultado(double *C_correto, double *C_calculado, int n) {
     double max_rel_diff = 0.0;
-    const double epsilon = 1e-12; 
     long total_elementos = (long)n * n;
     long n_long = n;
     
@@ -230,7 +229,7 @@ double valida_resultado(double *C_correto, double *C_calculado, int n) {
       diff_abs = fabs(C_seq - C_par);
       rel_diff;
 
-      if (fabs(C_seq) < epsilon) rel_diff = diff_abs;
+      if (fabs(C_seq) < EPSILON) rel_diff = diff_abs;
       else rel_diff = diff_abs / fabs(C_seq);
 
       if (rel_diff > max_rel_diff) max_rel_diff = rel_diff;
@@ -243,7 +242,7 @@ void registrar_resultado(FILE *file, int tam_matriz, char *versao,
                          double erro_max) {
     
     // Define status da validacao
-    char *status_val = (erro_max < 1e-8) ? "SUCESSO" : "FALHOU";
+    char *status_val = (erro_max < TOLERANCIA) ? "SUCESSO" : "FALHOU";
     
     // Calcula GFLOPS
     double gflops = (2.0 * tam_matriz * tam_matriz * tam_matriz / tempo) / 1e9;
@@ -290,7 +289,7 @@ double* aloca_matriz(int n) {
   return M;
 }
 
-void inicializa_matrizes(double *A, double *B, double *C, int n) {
+void inicializa_matrizes(double *A, double *B, int n) {
   long total = (long)n * n;
 
   #pragma omp parallel 

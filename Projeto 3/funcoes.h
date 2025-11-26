@@ -12,6 +12,10 @@
 #include <cblas.h>
 #include <immintrin.h>
 
+// Constantes de validacao dos resultados da multiplicacao
+#define EPSILON 1e-12
+#define TOLERANCIA 1e-8
+
 // Variáveis globais compartilhdas entre cuda e main
 extern int tam_matrizes[];
 extern int num_tam;
@@ -30,7 +34,7 @@ void imprimir_matriz(double *M, int n, FILE *file);
 
 // Funcoes auxiliares das funcoes dgemm
 double* aloca_matriz(int n);
-void inicializa_matrizes(double *A, double *B, double *C, int n);
+void inicializa_matrizes(double *A, double *B, int n);
 void zera_matriz(double *C, int n);
 void dgemm_local_blocos(double *A, double *B, double *C, int n, int l_rows); 
 

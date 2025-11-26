@@ -59,12 +59,14 @@ int main(int argc, char *argv[]) {
       C = aloca_matriz(tam_matriz);
       C_correto = aloca_matriz(tam_matriz); 
 
-      inicializa_matrizes(A, B, C, tam_matriz);
+      inicializa_matrizes(A, B, tam_matriz);
+      zera_matriz(C, tam_matriz);
+      zera_matriz(C_correto, tam_matriz);
       
       // --- 1. Versao Sequencial ---
 
-      tempo_seq = medir_tempo_execucao(dgemm_sequencial, NUM_REPETICOES, A, B, C, tam_matriz);
-      memcpy(C_correto, C, (size_t)tam_matriz * tam_matriz * sizeof(double));
+      // mando o C_correto no lugar de C, evitando copiar para C_correto depois
+      tempo_seq = medir_tempo_execucao(dgemm_sequencial, NUM_REPETICOES, A, B, C_correto, tam_matriz);
       registrar_resultado(file, tam_matriz, "1 (Seq)", tempo_seq, tempo_seq, 1, 0.0);
 
       // --- 2. Versao com OpenMP ---
