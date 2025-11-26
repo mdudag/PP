@@ -1,5 +1,11 @@
 #include "funcoes.h"
 
+// Variáveis globais compartilhdas entre cuda e main
+int tam_matrizes[] = {512, 1024, 2048, 4096};
+// int tam_matrizes[] = {512, 1024, 2048}; // Teste rapido
+int num_tam = sizeof(tam_matrizes)/sizeof(int);
+const int NUM_REPETICOES = 3;
+
 // Variaveis globais de controle para mpi wrapper
 static MPI_Comm g_mpi_comm = MPI_COMM_NULL;
 static int g_mpi_rank = 0;

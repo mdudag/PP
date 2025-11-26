@@ -1,3 +1,5 @@
+OBS: Ainda não testado: makefile e mudança para variáveis globais compartilhdas entre main e cuda
+
 # Multiplicação de Matrizes (DGEMM) com CUDA
 
 *Projeto 3*
@@ -63,13 +65,13 @@ sudo apt install -y libopenblas-dev
   sudo apt install -y python3-pip python3-pandas python3-matplotlib python3-numpy
   ~~~
     
-## Compilar e Executar (MUDAR)
+## Compilar e Executar
 
 **Use o comando make:**
 
 ### Versões dgemm Anteriores
 
-* Execução padrão com 4 threads
+* Execução padrão com 4
 
   ~~~bash
   make run
@@ -93,7 +95,7 @@ sudo apt install -y libopenblas-dev
 
 *Isso irá compilar dgemm_cuda.cu e funcoes.c, criar o executável dgemm_cuda e executá-lo.*
 
-## Validar (MUDAR)
+## Validar
 
 Para cada tamanho N, o programa imprime:
 
@@ -114,7 +116,7 @@ python3 generate_plots.py
 ~~~
 
 (MUDAR)
-O script irá processar automaticamente os arquivos teste6_par_openMP.txt (se existir) e teste7_par_mpi.txt, salvando todos os gráficos .png nas suas respectivas pastas (plots_teste6_par_openMP/ e plots_teste7_par_mpi/).
+O script irá processar automaticamente o arquivo teste8_cuda.txt, salvando todos os gráficos .png na sua respectiva pasta plots/plots_teste8_cuda.txt
 
 ## Limpar arquivos compilados
 

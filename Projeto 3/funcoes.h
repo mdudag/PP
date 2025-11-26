@@ -12,6 +12,12 @@
 #include <cblas.h>
 #include <immintrin.h>
 
+// Variáveis globais compartilhdas entre cuda e main
+extern int tam_matrizes[];
+extern int num_tam;
+extern const int NUM_REPETICOES;
+
+// Tamanho do bloco de cache
 #define SIZE_BLOCK 128
 
 // Definicao do tipo de funcao

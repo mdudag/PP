@@ -20,17 +20,14 @@ int main(int argc, char *argv[]) {
     }
 
     imprimir_informacoes_iniciais(file, "   Projeto 3 — Multiplicação de Matrizes (DGEMM) com CUDA");
+      fprintf(file, "----------------------------------------------------------------\n");
+      fprintf(file, "                          DGEMM ANTERIORES                      \n");
+      fprintf(file, "----------------------------------------------------------------\n");
   }
-
-  int tam_matrizes[] = {512, 1024, 2048, 4096};
-  // int tam_matrizes[] = {512, 1024, 2048}; // Teste rapido
-  int num_tam = sizeof(tam_matrizes) / sizeof(int);
   
   int contagens_threads[] = {2, 4, 6};
   // int contagens_threads[] = {2, 4}; // Teste no pc de Duda
   int num_thread_counts = sizeof(contagens_threads) / sizeof(int);
-  
-  const int NUM_REPETICOES = 3;
 
   if (rank == 0) {
     fprintf(file, "\n--- INICIO DOS EXPERIMENTOS (Media de %d execucoes) ---\n", NUM_REPETICOES);
