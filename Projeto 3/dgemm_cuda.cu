@@ -2,10 +2,6 @@
 #include <cuda_runtime.h>
 
 #define BSIZE 32
-#define ALPHA 1.0
-#define BETA 0.0
-#define TOLERANCE 1e-8
-#define EPSILON 1e-12
 
 // Checagem de erros CUDA
 #define cudaCheckError(ans) { gpuAssert((ans), __FILE__, __LINE__); }
@@ -67,6 +63,7 @@ int main() {
     zera_matriz(h_C_Correto, tam_matriz);
 
     // --- Versao sequencial ---
+
     tempo_seq_cpu = medir_tempo_execucao(dgemm_sequencial, NUM_REPETICOES, h_A, h_B, h_C_Correto, tam_matriz);
     registrar_resultado(file, tam_matriz, "1 (Seq)", tempo_seq_cpu, tempo_seq_cpu, 1, 0.0);
 
@@ -75,7 +72,7 @@ int main() {
     size_t size_bytes = tam_matriz * tam_matriz * sizeof(double);
 
     // Aloca memoria para matrizes na gpu 
-    double *d_A, *d_B, *d_C;
+    double *d_A, *d_B, *d_C;  // Device
     cudaCheckError(cudaMalloc((void**)&d_A, size_bytes));
     cudaCheckError(cudaMalloc((void**)&d_B, size_bytes));
     cudaCheckError(cudaMalloc((void**)&d_C, size_bytes));
@@ -220,7 +217,7 @@ int validate_results(int N, double *C_ref, double *C_test) {
   }
 
   printf("   [Validação] Diferença Relativa Máx: %e ", max_diff);
-  if (max_diff < TOLERANCE) {
+  if (max_diff < TOLERANCIA) {
     printf("(OK)\n");
     return 1;
   } else {
