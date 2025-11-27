@@ -7,14 +7,16 @@ int main(int argc, char *argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  // Inicia arquivo
-  FILE *file = NULL;
+  // Inicia arquivo de testes e de input com tempo sequencial para cuda
+  FILE *file = NULL, *file_T_seq = NULL;
   char nomeFile[100] = "./testes/teste8_cuda.txt";
 
   if (rank == 0) {
     file = fopen(nomeFile, "w");
-    if (!file) {
-      printf("Erro ao abrir o arquivo %s\n", nomeFile);
+    file_T_seq = fopen("file_T_seq.txt", "w");
+
+    if (!file || !file_T_seq) {
+      printf("Erro ao abrir um dos arquivos!\n");
       MPI_Abort(MPI_COMM_WORLD, 1);
       return 1;
     }
@@ -24,8 +26,8 @@ int main(int argc, char *argv[]) {
     fprintf(file, "----------------------------------------------------------------\n");
   }
   
-  // int contagens_threads[] = {2, 4, 6};
-  int contagens_threads[] = {2, 4}; // Teste no pc de Duda
+  int contagens_threads[] = {2, 4, 6};
+  // int contagens_threads[] = {2, 4}; // Teste no pc de Duda
   int num_thread_counts = sizeof(contagens_threads) / sizeof(int);
 
   if (rank == 0) {
@@ -66,6 +68,7 @@ int main(int argc, char *argv[]) {
 
       // mando o C_correto no lugar de C, evitando copiar para C_correto depois
       tempo_seq = medir_tempo_execucao(dgemm_sequencial, NUM_REPETICOES, A, B, C_correto, tam_matriz);
+      fprintf(file,  "%.6f\n", tempo_seq);
       registrar_resultado(file, tam_matriz, "1 (Seq)", tempo_seq, tempo_seq, 1, 0.0);
 
       // --- 2. Versao com OpenMP ---
@@ -143,7 +146,7 @@ int main(int argc, char *argv[]) {
 
   if (rank == 0) {
     fprintf(file, "\n[LOG] Experimentos finalizados.\n");
-    fclose(file);
+    fclose(file); fclose(file_T_seq);
   }
   
   MPI_Finalize();

@@ -19,13 +19,16 @@ int validate_results(int N, double *C_ref, double *C_test);
 
 int main() {
   // Inicia arquivo
-  FILE *file = NULL;
+  FILE *file = NULL, *file_T_seq = NULL;
   char nomeFile[100] = "./testes/teste8_cuda.txt";
 
   // Continua a escrita no mesmo arquivo
   file = fopen(nomeFile, "a");
-  if (!file) {
-    printf("Erro ao abrir o arquivo %s\n", nomeFile);
+  // Le o tempo sequencial da versao anterior no arquivo
+  file_T_seq = fopen("file_T_seq.txt", "r");
+
+  if (!file || !file_T_seq) {
+    printf("Erro ao abrir um dos arquivos!\n");
     return 1;
   }
 
@@ -50,22 +53,26 @@ int main() {
     double *h_B = NULL;
     double *h_C = NULL;
     double *h_C_Correto = NULL; // Sequencial
-    
-    double tempo_seq_cpu = 0.0;
+  
+    // double tempo_seq = 0.0;
+    double tempo_seq = 0.0;
 
     h_A = aloca_matriz(tam_matriz);
     h_B = aloca_matriz(tam_matriz);
     h_C = aloca_matriz(tam_matriz); 
     h_C_Correto = aloca_matriz(tam_matriz);
 
-    inicializa_matrizes(h_A, h_B, tam_matriz);
+    inicializa_matrizes(h_A, h_B, tam_matriz, idx);
     zera_matriz(h_C, tam_matriz);
     zera_matriz(h_C_Correto, tam_matriz);
 
     // --- Versao sequencial ---
 
-    tempo_seq_cpu = medir_tempo_execucao(dgemm_sequencial, NUM_REPETICOES, h_A, h_B, h_C_Correto, tam_matriz);
-    registrar_resultado(file, tam_matriz, "1 (Seq)", tempo_seq_cpu, tempo_seq_cpu, 1, 0.0);
+    // Executando sequencial so para obter o C_correto
+    medir_tempo_execucao(dgemm_sequencial, NUM_REPETICOES, h_A, h_B, h_C_Correto, tam_matriz);
+    fscanf(file_T_seq, "%lf", &tempo_seq);
+    // tempo_seq = medir_tempo_execucao(dgemm_sequencial, NUM_REPETICOES, h_A, h_B, h_C_Correto, tam_matriz);
+    // registrar_resultado(file, tam_matriz, "1 (Seq)", tempo_seq, tempo_seq, 1, 0.0);
 
     // --- Versao CUDA ---
     
@@ -109,11 +116,11 @@ int main() {
     // int n_th = ? numero de nucleos
     // char nome_versao[20];
     // sprintf(nome_versao, "%d (CUDA)", n_th);
-    // registrar_resultado(file, tam_matriz, nome_versao, tempo, tempo_seq_cpu, n_th, erro);
+    // registrar_resultado(file, tam_matriz, nome_versao, tempo, tempo_seq, n_th, erro);
     
     cudaCheckError(cudaMemcpy(h_C, d_C, size_bytes, cudaMemcpyDeviceToHost));
     fprintf(file, "Tempo: %.4f s | GFLOPS: %.2f | Speedup: %.2fx\n", 
-            tempo_gpu, gflops_naive, tempo_seq_cpu / tempo_gpu);
+            tempo_gpu, gflops_naive, tempo_seq / tempo_gpu);
     
     validate_results(tam_matriz, h_C_Correto, h_C);
 
@@ -135,16 +142,16 @@ int main() {
 
     cudaCheckError(cudaMemcpy(h_C, d_C, size_bytes, cudaMemcpyDeviceToHost));
     fprintf(file, "Tempo: %.4f s | GFLOPS: %.2f | Speedup: %.2fx\n", 
-            tempo_gpu, gflops_tiled, tempo_seq_cpu / tempo_gpu);
+            tempo_gpu, gflops_tiled, tempo_seq / tempo_gpu);
 
     validate_results(tam_matriz, h_C_Correto, h_C);
 
     cudaFree(d_A); cudaFree(d_B); cudaFree(d_C);
-    free(A); free(B); free(C); free(C_correto); 
+    free(h_A); free(h_B); free(h_C); free(h_C_correto); 
   }
 
   fprintf(file, "\n[LOG] Experimentos finalizados.\n");
-  fclose(file);
+  fclose(file); fclose(file_T_seq);
   return 0;
 }
 

@@ -1,8 +1,8 @@
 #include "funcoes.h"
 
 // Variáveis globais compartilhdas entre cuda e main
-// int tam_matrizes[] = {512, 1024, 2048, 4096};
-int tam_matrizes[] = {512, 1024, 2048}; // Teste rapido
+int tam_matrizes[] = {512, 1024, 2048, 4096};
+// int tam_matrizes[] = {512, 1024, 2048}; // Teste rapido
 int num_tam = sizeof(tam_matrizes)/sizeof(int);
 const int NUM_REPETICOES = 3;
 
@@ -217,22 +217,22 @@ double medir_tempo_execucao(func_matriz funcao, int NUM_REPETICOES, double *A, d
 }
 
 double valida_resultado(double *C_correto, double *C_calculado, int n) {
-    double max_rel_diff = 0.0;
-    long total_elementos = (long)n * n;
-    
-    double C_seq, C_par, diff_abs, rel_diff;
+  double max_rel_diff = 0.0;
+  long total_elementos = (long)n * n;
+  
+  double C_seq, C_par, diff_abs, rel_diff;
 
-    for (long i = 0; i < total_elementos; i++) {
-      C_seq = C_correto[i];
-      C_par = C_calculado[i];
-      diff_abs = fabs(C_seq - C_par);
+  for (long i = 0; i < total_elementos; i++) {
+    C_seq = C_correto[i];
+    C_par = C_calculado[i];
+    diff_abs = fabs(C_seq - C_par);
 
-      if (fabs(C_seq) < EPSILON) rel_diff = diff_abs;
-      else rel_diff = diff_abs / fabs(C_seq);
+    if (fabs(C_seq) < EPSILON) rel_diff = diff_abs;
+    else rel_diff = diff_abs / fabs(C_seq);
 
-      if (rel_diff > max_rel_diff) max_rel_diff = rel_diff;
-    }
-    return max_rel_diff;
+    if (rel_diff > max_rel_diff) max_rel_diff = rel_diff;
+  }
+  return max_rel_diff;
 }
 
 void registrar_resultado(FILE *file, int tam_matriz, char *versao, 
