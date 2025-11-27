@@ -256,7 +256,7 @@ void registrar_resultado(FILE *file, int tam_matriz, char *versao,
         fprintf(file, "| %-8d | %-12s | %-12.6f | %-10.3f | %-10s | %-10s | %-12.2e | %-9s |\n",
               tam_matriz, versao, tempo, gflops, "1.00x", "100.00%", erro_max, status_val);
     } 
-    // Paralelo (OpenMP ou MPI)
+    // Paralelo (OpenMP, MPI ou CUDA)
     else {
         double speedup = tempo_seq_base / tempo;
         double eficiencia = (speedup / n_threads) * 100.0;

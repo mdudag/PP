@@ -1,5 +1,6 @@
 #include "funcoes.h"
 #include <cuda_runtime.h>
+#include <sys/time.h>
 
 #define BSIZE 32
 
@@ -14,8 +15,15 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 
 __global__ void dgemm_naive_kernel(double *A, double *B, double *C, int N);
 __global__ void dgemm_tiled_kernel(double *A, double *B, double *C, int N);
+
+double medir_tempo_cuda(void (*kernel)(double*, double*, double*, int),
+                        double *d_A, double *d_B, double *d_C,
+                        int N, int NUM_REPETICOES);
 double get_time();
-int validate_results(int N, double *C_ref, double *C_test);
+// int validate_results(int N, double *C_ref, double *C_test);
+
+// Define tipo de ponteiro para kernel CUDA
+typedef void (*kernel_cuda)(double*, double*, double*, int);
 
 int main() {
   // Inicia arquivo
@@ -66,7 +74,7 @@ int main() {
     zera_matriz(h_C, tam_matriz);
     zera_matriz(h_C_Correto, tam_matriz);
 
-    // --- Versao sequencial ---
+    // --- 1. Versao sequencial para comparar C ---
 
     // Executando sequencial so para obter o C_correto
     medir_tempo_execucao(dgemm_sequencial, NUM_REPETICOES, h_A, h_B, h_C_Correto, tam_matriz);
@@ -75,9 +83,9 @@ int main() {
     // registrar_resultado(file, tam_matriz, "1 (Seq)", tempo_seq, tempo_seq, 1, 0.0);
 
     // --- Versao CUDA ---
-    
-    size_t size_bytes = tam_matriz * tam_matriz * sizeof(double);
 
+    size_t size_bytes = tam_matriz * tam_matriz * sizeof(double);
+    
     // Aloca memoria para matrizes na gpu 
     double *d_A, *d_B, *d_C;  // Device
     cudaCheckError(cudaMalloc((void**)&d_A, size_bytes));
@@ -87,30 +95,48 @@ int main() {
     // Copia os valores das matrizes da CPU para as matrizes da GPU
     cudaCheckError(cudaMemcpy(d_A, h_A, size_bytes, cudaMemcpyHostToDevice));
     cudaCheckError(cudaMemcpy(d_B, h_B, size_bytes, cudaMemcpyHostToDevice));
-    
-    dim3 threadsPerBlock(BSIZE, BSIZE);
-    dim3 blocksPerGrid((tam_matriz + BSIZE - 1)/BSIZE, (tam_matriz + BSIZE - 1)/BSIZE);
-    
+
     // --- CUDA Naive ---
 
     printf(" Executando CUDA Naive...       "); fflush(stdout);
-    cudaCheckError(cudaMemset(d_C, 0, size_bytes));
-    dgemm_naive_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, tam_matriz);
-    cudaDeviceSynchronize();
-
-    double start, end;
-    double tempo_gpu, erro, gflops;
-
-    // Calculo do tempo
-    start = get_time();
-    dgemm_naive_kernel<<<blocksPerGrid, threadsPerBlock>>>(tam_matriz, ALPHA, d_A, d_B, BETA, d_C);
-    cudaCheckError(cudaDeviceSynchronize());
-    end = get_time();
-
-    // Metricas
-    tempo_gpu = end - start; // Calculo do tempo
-    double gflops_naive = (2.0 * tam_matriz * tam_matriz * tam_matriz * 1e-9) / tempo_gpu;
     
+    double tempo_gpu = medir_tempo_cuda(dgemm_naive_kernel, d_A, d_B, d_C, tam_matriz, NUM_REPETICOES);
+    cudaCheckError(cudaMemcpy(h_C, d_C, size_bytes, cudaMemcpyDeviceToHost));
+    double erro_max = valida_resultado(h_C_Correto, h_C, tam_matriz);
+    registrar_resultado(file, tam_matriz, "CUDA Naive", tempo_gpu, tempo_seq, 0, erro_max);
+
+    // Antigo
+    // cudaCheckError(cudaMemset(d_C, 0, size_bytes));
+    // dgemm_naive_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, tam_matriz);
+    // cudaDeviceSynchronize();
+
+    // Medicoes 3
+    // double tempo_gpu=0.0, erro, gflops;
+
+    // for (int rep = 0; rep < NUM_REPETICOES; rep++) {
+    //   cudaCheckError(cudaMemset(d_C, 0, size_bytes));
+
+    //   double t0 = get_time();
+    //   kernel<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, tam_matriz);
+    //   cudaCheckError(cudaDeviceSynchronize());
+    //   double t1 = get_time();
+      
+    //   tempo_gpu += (t1 - t0);
+    // }
+
+    // double tempo_medio = tempo_total / NUM_REPETICOES;
+
+    // Calculo do tempo add
+    // start = get_time();
+    // dgemm_naive_kernel<<<blocksPerGrid, threadsPerBlock>>>(tam_matriz, ALPHA, d_A, d_B, BETA, d_C);
+    // cudaCheckError(cudaDeviceSynchronize());
+    // end = get_time();
+
+    // Metricas add
+    // tempo_gpu = end - start; // Calculo do tempo
+    // double gflops_naive = (2.0 * tam_matriz * tam_matriz * tam_matriz * 1e-9) / tempo_gpu;
+    
+    // Pensando...
     // tempo = medir_tempo_execucao(dgemm_paralelo_openMP, NUM_REPETICOES, A, B, C, tam_matriz);
     // erro = valida_resultado(C_correto, C, tam_matriz);
     // int n_th = ? numero de nucleos
@@ -118,36 +144,50 @@ int main() {
     // sprintf(nome_versao, "%d (CUDA)", n_th);
     // registrar_resultado(file, tam_matriz, nome_versao, tempo, tempo_seq, n_th, erro);
     
-    cudaCheckError(cudaMemcpy(h_C, d_C, size_bytes, cudaMemcpyDeviceToHost));
-    fprintf(file, "Tempo: %.4f s | GFLOPS: %.2f | Speedup: %.2fx\n", 
-            tempo_gpu, gflops_naive, tempo_seq / tempo_gpu);
+    // Medicao antiga
+    // cudaCheckError(cudaMemcpy(h_C, d_C, size_bytes, cudaMemcpyDeviceToHost));
+    // fprintf(file, "Tempo: %.4f s | GFLOPS: %.2f | Speedup: %.2fx\n", 
+    //         tempo_gpu, gflops_naive, tempo_seq / tempo_gpu);
     
-    validate_results(tam_matriz, h_C_Correto, h_C);
+    // Validacao antiga
+    // validate_results(tam_matriz, h_C_Correto, h_C);
+
+
+
+
+
 
     // --- CUDA Tiled ---
 
-    zera_matriz(h_C, tam_matriz);
+    // ANtigo
+    // zera_matriz(h_C, tam_matriz);
     printf("   Executando CUDA Tiled...       "); fflush(stdout);
-    cudaCheckError(cudaMemset(d_C, 0, size_bytes));
-
-    // Calculo do tempo
-    start = get_time();
-    dgemm_tiled_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, tam_matriz);
-    cudaCheckError(cudaDeviceSynchronize());
-    double end = get_time();
-
-    // Metricas
-    tempo_gpu = end - start;
-    double gflops_tiled = (2.0 * tam_matriz * tam_matriz * tam_matriz * 1e-9) / tempo_gpu;
-
+    tempo_gpu = medir_tempo_cuda(dgemm_tiled_kernel, d_A, d_B, d_C, tam_matriz, NUM_REPETICOES);
     cudaCheckError(cudaMemcpy(h_C, d_C, size_bytes, cudaMemcpyDeviceToHost));
-    fprintf(file, "Tempo: %.4f s | GFLOPS: %.2f | Speedup: %.2fx\n", 
-            tempo_gpu, gflops_tiled, tempo_seq / tempo_gpu);
+    erro_max = valida_resultado(h_C_Correto, h_C, tam_matriz);
+    registrar_resultado(file, tam_matriz, "CUDA Tiled", tempo_gpu, tempo_seq, 0, erro_max);
 
-    validate_results(tam_matriz, h_C_Correto, h_C);
+    // ANtigo
+    // cudaCheckError(cudaMemset(d_C, 0, size_bytes));
+
+    // // Calculo do tempo
+    // start = get_time();
+    // dgemm_tiled_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, tam_matriz);
+    // cudaCheckError(cudaDeviceSynchronize());
+    // double end = get_time();
+
+    // // Metricas
+    // tempo_gpu = end - start;
+    // double gflops_tiled = (2.0 * tam_matriz * tam_matriz * tam_matriz * 1e-9) / tempo_gpu;
+
+    // cudaCheckError(cudaMemcpy(h_C, d_C, size_bytes, cudaMemcpyDeviceToHost));
+    // fprintf(file, "Tempo: %.4f s | GFLOPS: %.2f | Speedup: %.2fx\n", 
+    //         tempo_gpu, gflops_tiled, tempo_seq / tempo_gpu);
+
+    // validate_results(tam_matriz, h_C_Correto, h_C);
 
     cudaFree(d_A); cudaFree(d_B); cudaFree(d_C);
-    free(h_A); free(h_B); free(h_C); free(h_C_correto); 
+    free(h_A); free(h_B); free(h_C); free(h_C_Correto); 
   }
 
   fprintf(file, "\n[LOG] Experimentos finalizados.\n");
@@ -155,7 +195,7 @@ int main() {
   return 0;
 }
 
-// --- Kernels CUDA ---
+// --- CUDA ---
 
 // Cada thread calcula 1 elemento de C
 __global__ void dgemm_naive_kernel(double *A, double *B, double *C, int N) {
@@ -203,6 +243,79 @@ __global__ void dgemm_tiled_kernel(double *A, double *B, double *C, int N) {
     C[row*N + col] = cValue;
 }
 
+// Função para medir tempo de execução de kernel CUDA
+double medir_tempo_cuda(void (*kernel)(double*, double*, double*, int),
+                        double *d_A, double *d_B, double *d_C,
+                        int N, int NUM_REPETICOES) {
+  double tempo_total = 0.0;
+
+  // Grid e block devem já estar definidos na main
+  dim3 threadsPerBlock(BSIZE, BSIZE);
+  dim3 blocksPerGrid((N + BSIZE - 1)/BSIZE, (N + BSIZE - 1)/BSIZE);
+
+  for (int rep = 0; rep < NUM_REPETICOES; rep++) {
+    cudaCheckError(cudaMemset(d_C, 0, N * N * sizeof(double))); // zera C
+
+    double t0 = get_time();
+    kernel<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, N);
+    cudaCheckError(cudaDeviceSynchronize());
+    double t1 = get_time();
+
+    tempo_total += (t1 - t0);
+  }
+
+  return tempo_total / NUM_REPETICOES;
+}
+
+// void dgemm_cuda(FILE *file, int tam_matriz, 
+//                    double *h_A, double *h_B, double *h_C, double *h_C_Correto,
+//                    double tempo_seq_base, int NUM_REPETICOES, int BSIZE,
+//                    kernel_func_ptr kernel, char *nome_versao) {
+
+//   size_t size_bytes = tam_matriz * tam_matriz * sizeof(double);
+//   double *d_A, *d_B, *d_C;
+
+//   // Aloca memória no device
+//   cudaCheckError(cudaMalloc((void**)&d_A, size_bytes));
+//   cudaCheckError(cudaMalloc((void**)&d_B, size_bytes));
+//   cudaCheckError(cudaMalloc((void**)&d_C, size_bytes));
+
+//   // Copia matrizes para a GPU
+//   cudaCheckError(cudaMemcpy(d_A, h_A, size_bytes, cudaMemcpyHostToDevice));
+//   cudaCheckError(cudaMemcpy(d_B, h_B, size_bytes, cudaMemcpyHostToDevice));
+
+//   dim3 threadsPerBlock(BSIZE, BSIZE);
+//   dim3 blocksPerGrid((tam_matriz + BSIZE - 1)/BSIZE, (tam_matriz + BSIZE - 1)/BSIZE);
+
+//   double tempo_total = 0.0;
+
+//   for (int rep = 0; rep < NUM_REPETICOES; rep++) {
+//     cudaCheckError(cudaMemset(d_C, 0, size_bytes));
+
+//     double t0 = get_time();
+//     kernel<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, tam_matriz);
+//     cudaCheckError(cudaDeviceSynchronize());
+//     double t1 = get_time();
+
+//     tempo_total += (t1 - t0);
+//   }
+
+//   double tempo_medio = tempo_total / NUM_REPETICOES;
+
+//   // Copia resultado de volta
+//   cudaCheckError(cudaMemcpy(h_C, d_C, size_bytes, cudaMemcpyDeviceToHost));
+
+//   // Valida resultado
+//   double erro_max = valida_resultado(h_C_Correto, h_C, tam_matriz);
+
+//   // Registra no arquivo
+//   registrar_resultado(file, tam_matriz, nome_versao, tempo_medio, tempo_seq_base, 0, erro_max);
+
+//   // Libera memória
+//   cudaFree(d_A); cudaFree(d_B); cudaFree(d_C);
+// }
+
+
 // --- Funcao auxiliar do CUDA ---
 
 double get_time() {
@@ -211,24 +324,24 @@ double get_time() {
   return tv.tv_sec + tv.tv_usec * 1e-6;
 }
 
-int validate_results(int N, double *C_ref, double *C_test) {
-  double max_diff = 0.0;
+// int validate_results(int N, double *C_ref, double *C_test) {
+//   double max_diff = 0.0;
   
-  for (int i = 0; i < N * N; ++i) {
-    double abs_diff = fabs(C_ref[i] - C_test[i]);
-    double rel_diff = abs_diff / (fabs(C_ref[i]) + EPSILON);
+//   for (int i = 0; i < N * N; ++i) {
+//     double abs_diff = fabs(C_ref[i] - C_test[i]);
+//     double rel_diff = abs_diff / (fabs(C_ref[i]) + EPSILON);
     
-    if (rel_diff > max_diff) {
-      max_diff = rel_diff;
-    }
-  }
+//     if (rel_diff > max_diff) {
+//       max_diff = rel_diff;
+//     }
+//   }
 
-  printf("   [Validação] Diferença Relativa Máx: %e ", max_diff);
-  if (max_diff < TOLERANCIA) {
-    printf("(OK)\n");
-    return 1;
-  } else {
-    printf("(FALHA)\n");
-    return 0;
-  }
-}
+//   printf("   [Validação] Diferença Relativa Máx: %e ", max_diff);
+//   if (max_diff < TOLERANCIA) {
+//     printf("(OK)\n");
+//     return 1;
+//   } else {
+//     printf("(FALHA)\n");
+//     return 0;
+//   }
+// }
