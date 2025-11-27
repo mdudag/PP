@@ -71,7 +71,7 @@ sudo apt install -y libopenblas-dev
 
 ### Versões dgemm Anteriores
 
-* Execução padrão com 4
+* Execução padrão com 6
 
   ~~~bash
   make run
@@ -80,7 +80,7 @@ sudo apt install -y libopenblas-dev
 * Mudando número de Threads
 
   ~~~bash
-  make run NP=6
+  make run NP=4
   ~~~
 
 *Isso irá compilar main.c e funcoes.c, criar o executável main e executá-lo.*

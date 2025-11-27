@@ -20,13 +20,12 @@ int main(int argc, char *argv[]) {
     }
 
     imprimir_informacoes_iniciais(file, "   Projeto 3 — Multiplicação de Matrizes (DGEMM) com CUDA");
-      fprintf(file, "----------------------------------------------------------------\n");
-      fprintf(file, "                          DGEMM ANTERIORES                      \n");
-      fprintf(file, "----------------------------------------------------------------\n");
+    fprintf(file, "                          DGEMM ANTERIORES                      \n");
+    fprintf(file, "----------------------------------------------------------------\n");
   }
   
-  int contagens_threads[] = {2, 4, 6};
-  // int contagens_threads[] = {2, 4}; // Teste no pc de Duda
+  // int contagens_threads[] = {2, 4, 6};
+  int contagens_threads[] = {2, 4}; // Teste no pc de Duda
   int num_thread_counts = sizeof(contagens_threads) / sizeof(int);
 
   if (rank == 0) {
@@ -41,9 +40,9 @@ int main(int argc, char *argv[]) {
 
     // Visualizacao no terminal
     if (rank == 0) {
-        printf("--> Testes para matriz %dx%d...\n", tam_matriz, tam_matriz);
-        if (tam_matriz == 4096) printf("    (Isso pode demorar alguns minutos, aguarde...)\n");
-        fflush(stdout); // Força a escrita na tela imediatamente
+      printf("--> Testes para matriz %dx%d...\n", tam_matriz, tam_matriz);
+      if (tam_matriz == 4096) printf("    (Isso pode demorar alguns minutos, aguarde...)\n");
+      fflush(stdout); // Força a escrita na tela imediatamente
     }
 
 	  double *A = NULL;
@@ -59,7 +58,7 @@ int main(int argc, char *argv[]) {
       C = aloca_matriz(tam_matriz);
       C_correto = aloca_matriz(tam_matriz); 
 
-      inicializa_matrizes(A, B, tam_matriz);
+      inicializa_matrizes(A, B, tam_matriz, idx);
       zera_matriz(C, tam_matriz);
       zera_matriz(C_correto, tam_matriz);
       

@@ -1,8 +1,8 @@
 #include "funcoes.h"
 
 // Variáveis globais compartilhdas entre cuda e main
-int tam_matrizes[] = {512, 1024, 2048, 4096};
-// int tam_matrizes[] = {512, 1024, 2048}; // Teste rapido
+// int tam_matrizes[] = {512, 1024, 2048, 4096};
+int tam_matrizes[] = {512, 1024, 2048}; // Teste rapido
 int num_tam = sizeof(tam_matrizes)/sizeof(int);
 const int NUM_REPETICOES = 3;
 
@@ -219,7 +219,6 @@ double medir_tempo_execucao(func_matriz funcao, int NUM_REPETICOES, double *A, d
 double valida_resultado(double *C_correto, double *C_calculado, int n) {
     double max_rel_diff = 0.0;
     long total_elementos = (long)n * n;
-    long n_long = n;
     
     double C_seq, C_par, diff_abs, rel_diff;
 
@@ -227,7 +226,6 @@ double valida_resultado(double *C_correto, double *C_calculado, int n) {
       C_seq = C_correto[i];
       C_par = C_calculado[i];
       diff_abs = fabs(C_seq - C_par);
-      rel_diff;
 
       if (fabs(C_seq) < EPSILON) rel_diff = diff_abs;
       else rel_diff = diff_abs / fabs(C_seq);
@@ -269,18 +267,18 @@ void registrar_resultado(FILE *file, int tam_matriz, char *versao,
 }
 
 // --- Funcoes Auxiliares ---
-
-// Função auxiliar para configurar o ambiente antes de chamar o teste
+  
+// Funcao auxiliar para configurar o ambiente antes de chamar o teste
 void set_mpi_state(MPI_Comm comm) {
-    if (comm != MPI_COMM_NULL) {
-        g_mpi_comm = comm;
-        MPI_Comm_rank(comm, &g_mpi_rank);
-        MPI_Comm_size(comm, &g_mpi_size);
-    } else {
-        g_mpi_comm = MPI_COMM_NULL;
-        g_mpi_rank = 0;
-        g_mpi_size = 1;
-    }
+  if (comm != MPI_COMM_NULL) {
+    g_mpi_comm = comm;
+    MPI_Comm_rank(comm, &g_mpi_rank);
+    MPI_Comm_size(comm, &g_mpi_size);
+  } else {
+    g_mpi_comm = MPI_COMM_NULL;
+    g_mpi_rank = 0;
+    g_mpi_size = 1;
+  }
 }
 
 double* aloca_matriz(int n) {
@@ -289,14 +287,15 @@ double* aloca_matriz(int n) {
   return M;
 }
 
-void inicializa_matrizes(double *A, double *B, int n) {
+void inicializa_matrizes(double *A, double *B, int n, int id) {
   long total = (long)n * n;
+  // Gera matrizes iguais, mas diferente para cada tamanho
+  unsigned int base_seed = 12345 + n*10 + id;
 
   #pragma omp parallel 
   {
-    unsigned int seed = omp_get_thread_num() + (unsigned int)time(NULL);
-  
-	#pragma omp for
+    unsigned int seed = base_seed + omp_get_thread_num(); // Cada thread tem seu seed
+    #pragma omp for
     for (long i = 0; i < total; i++) {
       A[i] = (double)(rand_r(&seed) % 3 - 1);
       B[i] = (double)(rand_r(&seed) % 9 - 4);
